@@ -32,7 +32,17 @@
   - TypeScript 向けには `winning-poker-hand-rank` 等のライブラリが利用可能。
   - Cactus Kev 系アルゴリズムは 7 枚から 5 枚の最良手を求める標準的な方式。
   - 自前実装も可能だが、検証コストを考えると既存ライブラリ利用を推奨。
-- **Implications**: 役判定は外部ライブラリを 1 つ採用し、インターフェースを薄くラップしてドメインから利用する形とする。採用ライブラリは実装フェーズで選定。
+- **Implications**: 役判定は外部ライブラリを 1 つ採用し、インターフェースを薄くラップしてドメインから利用する形とする。
+
+### 役判定ライブラリの選定と npm メンテ状況（設計フェーズで確定）
+
+- **Context**: 実装前に採用ライブラリを決め、npm の更新・メンテ状況を確認してリスクを抑える。
+- **Sources Consulted**: npm registry、@pokertools/evaluator / poker-hand-evaluator / poker-evaluator 等の比較
+- **Findings**:
+  - **@pokertools/evaluator**: TypeScript・5/6/7 枚対応・零依存。Cactus Kev / Paul Senzee 系。7 枚で約 1,700 万ハンド/秒。npm で公開（v1.0.1）。MIT。
+  - poker-hand-evaluator: Cactus Kev 系・5 枚中心。約 102KB のルックアップテーブル。
+  - poker-evaluator: Two Plus Two 系・3/5/6/7 枚対応。
+- **Implications**: 7 枚を直接サポートし TypeScript と零依存である **@pokertools/evaluator** を採用。設計・tasks で選定済みとし、タスク 3.1 では選定ではなくアダプタ実装に集中する。
 
 ### Apple風デザイン
 
@@ -74,10 +84,10 @@
 
 - **Context**: テキサスホールデムの役順・比較は仕様が明確であり、実績ある実装の利用が安全。
 - **Alternatives Considered**: 1) 自前実装 2) 既存の TypeScript/JavaScript ライブラリを利用
-- **Selected Approach**: 実装フェーズで 1 つの役判定ライブラリを選び、アプリ側は「7 枚カード → 役ランク」のインターフェースでラップする。
-- **Rationale**: 正確性・パフォーマンス・保守コストのバランスが良い。
-- **Trade-offs**: ライブラリの API に合わせた薄いアダプタが必要。
-- **Follow-up**: tasks で「役判定アダプタ」と「ライブラリ選定」をタスクに含める。
+- **Selected Approach**: **@pokertools/evaluator** を採用し、アプリ側は「7 枚カード → 役ランク」のインターフェースでラップする。
+- **Rationale**: TypeScript 対応・5/6/7 枚対応・Cactus Kev 系アルゴリズム・零依存・高性能。npm で公開されており、7 枚評価を直接サポートする。
+- **Trade-offs**: ライブラリの API（evaluateBoard / evaluate + getCardCode）に合わせた薄いアダプタが必要。
+- **Follow-up**: 実装はタスク 3.1 で @pokertools/evaluator を用いたアダプタを実装する。
 
 ## Risks & Mitigations
 
@@ -90,4 +100,4 @@
 - [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines) — 一貫性・階層・余白の参照
 - [Optimizing Your Website for Safari](https://developer.apple.com/documentation/webkit/optimizing-your-website-for-safari) — Web での見た目・フォント
 - [Poker and TypeScript (OpenReplay)](https://blog.openreplay.com/forever-functional-poker-and-typescript/) — 役判定の型・ロジックの参考
-- 役判定ライブラリ候補: winning-poker-hand-rank（TypeScript）、poker-hand（Cactus Kev）等 — 実装時に選定
+- [@pokertools/evaluator (npm)](https://www.npmjs.com/package/@pokertools/evaluator) — 採用役判定ライブラリ。7 枚対応・TypeScript・零依存。Cactus Kev / Paul Senzee 系 Perfect Hash。
