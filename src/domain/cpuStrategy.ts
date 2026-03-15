@@ -117,7 +117,6 @@ export function decideAction(
   }
 
   if (canCheck) {
-    // タダで見られるならチェック
     if (canBet && roll < 0.2) {
       const amount = calculateBetAmount(strength, player.chips, state.currentBet)
       return { type: 'bet', amount }

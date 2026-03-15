@@ -68,8 +68,6 @@ function processCpuTurnsAndPhases(
       continue
     }
 
-    // 非フォールドプレイヤーが全員all-in、または
-    // アクション可能なプレイヤーが1人以下の場合はショーダウンまでスキップ
     if (!canAnyoneStillBet(current)) {
       current = skipToShowdownAndResolve(current, randomFn)
       continue

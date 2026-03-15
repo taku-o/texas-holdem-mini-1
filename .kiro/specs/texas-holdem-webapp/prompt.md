@@ -121,4 +121,28 @@ takt --task "/kiro:spec-impl texas-holdem-webapp 6"
 
 /kiro-complete-tasks texas-holdem-webapp 6
 
+/simplify
+
+これについて詳しく教えて
+- cpuStrategy.ts のアクション選択パターンの重複: 既存コードの変更でありdiffの範囲外、また軽微
+
+takt --task "/kiro:spec-impl texas-holdem-webapp 7"
+
+takt
+
+次のレビューの指摘事項に対応してください。
+  1. isHuman の冗長なprop (Medium)
+      - PlayerSeats が humanPlayerId propを受け取り player.id === humanPlayerId で計算しているが、Player 型には既に player.isHuman
+      フィールドが存在する
+      - humanPlayerId propを削除して player.isHuman を直接使えば、propsが1つ減り冗長性が解消される
+
+  2. 不要なラッパー <div> (Low-Medium)
+      - PlayerSeats 内で各 PlayerSeat を <div data-testid={...}> で囲んでいるが、PlayerSeat 自体がルートの <div> を持つため不要なDOM階層
+      - data-testid を PlayerSeat に渡す形にすればラッパーを除去できる
+
+/simplify
+
+/kiro-complete-tasks texas-holdem-webapp 7
+
+
 

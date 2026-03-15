@@ -671,6 +671,64 @@ describe('gameFlow', () => {
       })
     })
 
+    describe('1人だけチップ残りの場合のフェーズスキップ', () => {
+      test('should skip to showdown when only one non-folded player has chips', () => {
+        // Given: 非フォールド2人のうち1人だけall-in（chips=0）
+        const players = [
+          createTestPlayer({
+            id: 'player-0',
+            isHuman: true,
+            chips: 500,
+            currentBetInRound: 500,
+            holeCards: [card('A', 'spades'), card('K', 'hearts')],
+          }),
+          createTestPlayer({
+            id: 'player-1',
+            isHuman: false,
+            chips: 0,
+            currentBetInRound: 500,
+            holeCards: [card('Q', 'hearts'), card('Q', 'diamonds')],
+          }),
+          createTestPlayer({
+            id: 'player-2',
+            isHuman: false,
+            chips: 0,
+            folded: true,
+            currentBetInRound: 0,
+          }),
+          createTestPlayer({
+            id: 'player-3',
+            isHuman: false,
+            chips: 0,
+            folded: true,
+            currentBetInRound: 0,
+          }),
+          createTestPlayer({
+            id: 'player-4',
+            isHuman: false,
+            chips: 0,
+            folded: true,
+            currentBetInRound: 0,
+          }),
+        ]
+        const state = createGameState({
+          players,
+          phase: 'preflop',
+          pot: 1000,
+          currentBet: 500,
+          currentPlayerIndex: 0,
+          deck: setupNewGame(fixedRandom).deck,
+          lastAggressorIndex: 1,
+        })
+
+        // When: advanceUntilHumanTurnを呼ぶ
+        const result = advanceUntilHumanTurn(state, fixedRandom)
+
+        // Then: ショーダウンまで自動進行してポットが分配されている
+        expect(result.pot).toBe(0)
+      })
+    })
+
     describe('非争ポットの解決', () => {
       test('should resolve uncontested pot when only one player remains', () => {
         // Given: 1人を除いて全員フォールド、CPUの番
