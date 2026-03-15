@@ -89,6 +89,28 @@ takt --task "/kiro:spec-impl texas-holdem-webapp 2"
 /kiro-complete-tasks texas-holdem-webapp 2
 
 takt --task "/kiro:spec-impl texas-holdem-webapp 3"
+/simplify
+/kiro-complete-tasks texas-holdem-webapp 3
+
+takt --task "/kiro:spec-impl texas-holdem-webapp 4"
+/simplify
+
+takt
+レビューで指摘事項がありました。こちらを修正してください。
+  - テストヘルパーの重複（card, createTestPlayer, createTestState等）
+
+/simplify
+
+レビューで指摘事項がありました。こちらを修正してください。
+  2. createTestState() での不要な createDeck() 呼び出し: betting.test.ts や showdown.test.ts では deck: []
+  で即座に上書きされるため、52枚のカード生成が無駄になっています（約31テストケース分）。
+
+/simplify
+
+/kiro-complete-tasks texas-holdem-webapp 4
+
+
+
 
 
 

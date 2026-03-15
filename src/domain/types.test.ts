@@ -273,6 +273,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'player-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: 初期状態を確認する
@@ -306,6 +307,7 @@ describe('types', () => {
         currentPlayerIndex: 3,
         humanPlayerId: 'human-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: プリフロップ状態を確認する
@@ -333,6 +335,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'human-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: フロップ状態のコミュニティカードを確認する
@@ -359,6 +362,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'human-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: ターン状態のコミュニティカードを確認する
@@ -386,6 +390,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'human-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: リバー状態のコミュニティカードを確認する
@@ -405,6 +410,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'human-1',
         deck: [],
+        lastAggressorIndex: null,
       }
 
       // When: ディーラーインデックスを確認する
@@ -429,6 +435,7 @@ describe('types', () => {
         currentPlayerIndex: 0,
         humanPlayerId: 'human-1',
         deck,
+        lastAggressorIndex: null,
       }
 
       // When: デッキを確認する

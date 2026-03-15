@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { Card } from './types'
 import { evaluate } from './handEvaluator'
-
-const card = (rank: Card['rank'], suit: Card['suit']): Card => ({ rank, suit })
+import { card } from './testHelpers'
 
 describe('handEvaluator', () => {
   describe('evaluate', () => {

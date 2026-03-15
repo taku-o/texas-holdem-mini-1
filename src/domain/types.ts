@@ -54,6 +54,7 @@ export type GameState = {
   currentPlayerIndex: number
   humanPlayerId: string
   deck: Card[]
+  lastAggressorIndex: number | null
 }
 
 export type HandRankCategory =
