@@ -79,8 +79,11 @@ pull requestを作成して。
 3.  /Users/taku-o/Documents/workspaces/texas-holdem-mini-1/.kiro/specs/texas-holdem-webapp/tasks.mdのTask 1と、サブタスクにチェックを入れて。
 
 
-     /plugin marketplace add anthropics/claude-code
-     /plugin install frontend-design@claude-code-plugins
+/plugin marketplace add anthropics/claude-code
+/plugin install frontend-design@claude-code-plugins
+
+
+takt --task "/kiro:spec-impl texas-holdem-webapp 2"
 
 
 
