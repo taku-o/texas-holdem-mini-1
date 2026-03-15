@@ -10,12 +10,13 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@pokertools/evaluator": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.1.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

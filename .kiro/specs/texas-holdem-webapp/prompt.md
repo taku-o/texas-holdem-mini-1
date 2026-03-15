@@ -84,6 +84,11 @@ pull requestを作成して。
 
 
 takt --task "/kiro:spec-impl texas-holdem-webapp 2"
+/simplify
+
+/kiro-complete-tasks texas-holdem-webapp 2
+
+takt --task "/kiro:spec-impl texas-holdem-webapp 3"
 
 
 
