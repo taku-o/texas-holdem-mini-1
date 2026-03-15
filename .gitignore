@@ -20,6 +20,9 @@ node_modules/
 .serena/cache/
 .serena/logs/
 
+# Build
+dist/
+
 # Misc
 .env
 .env.local
