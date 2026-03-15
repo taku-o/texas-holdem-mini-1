@@ -150,6 +150,12 @@ takt --task "/kiro:spec-impl texas-holdem-webapp 8"
 
 /kiro-complete-tasks texas-holdem-webapp 8
 
+takt --task "/kiro:spec-impl texas-holdem-webapp 9"
+
+/simplify
+
+/kiro-complete-tasks texas-holdem-webapp 9
+
 
 
 

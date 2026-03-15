@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import App from './App'
 
@@ -19,5 +19,37 @@ describe('App', () => {
 
     // Then: 画面に何らかのコンテンツが表示される（空ではない）
     expect(container.textContent?.length).toBeGreaterThan(0)
+  })
+
+  test('should show start game button on initial render', () => {
+    // Given: Appを初回レンダリング
+    // When: レンダリングする
+    render(<App />)
+
+    // Then: ゲーム開始ボタンが表示される
+    expect(screen.getByRole('button', { name: /ゲーム開始/i })).toBeTruthy()
+  })
+
+  test('should start game when start button is clicked', () => {
+    // Given: 初期表示でゲーム開始ボタンがある
+    const { container } = render(<App />)
+
+    // When: ゲーム開始ボタンをクリックする
+    fireEvent.click(screen.getByRole('button', { name: /ゲーム開始/i }))
+
+    // Then: ゲーム中の画面が表示される（プレイヤー席が存在する）
+    const seatElements = container.querySelectorAll('[data-testid^="player-seat-"]')
+    expect(seatElements).toHaveLength(5)
+  })
+
+  test('should not show start button during active game', () => {
+    // Given: ゲームを開始済み
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /ゲーム開始/i }))
+
+    // When: ゲーム中の画面を確認する
+
+    // Then: ゲーム開始ボタンは表示されない
+    expect(screen.queryByRole('button', { name: /^ゲーム開始$/i })).toBeNull()
   })
 })

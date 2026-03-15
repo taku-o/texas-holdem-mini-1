@@ -1,10 +1,18 @@
+import { GameScreen } from './ui/GameScreen'
+import { useGameController } from './application/useGameController'
+
 function App() {
+  const { gameState, validActions, isHumanTurn, startGame, handleAction } =
+    useGameController(Math.random)
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-semibold tracking-tight text-gray-900">
-        Texas Hold'em
-      </h1>
-    </div>
+    <GameScreen
+      gameState={gameState}
+      validActions={validActions}
+      isHumanTurn={isHumanTurn}
+      onStartGame={startGame}
+      onAction={handleAction}
+    />
   )
 }
 
