@@ -36,6 +36,12 @@ export type PlayerAction = {
   amount?: number
 }
 
+export type ValidAction = {
+  type: ActionType
+  min?: number
+  max?: number
+}
+
 export type GamePhase =
   | 'idle'
   | 'preflop'

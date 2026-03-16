@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import { ActionBar } from './ActionBar'
-import type { PlayerAction } from '../domain/types'
+import type { ValidAction } from '../domain/types'
 import { BIG_BLIND } from '../domain/constants'
 
 describe('ActionBar', () => {
@@ -9,11 +9,8 @@ describe('ActionBar', () => {
     validActions: [
       { type: 'fold' as const },
       { type: 'check' as const },
-      { type: 'bet' as const },
+      { type: 'bet' as const, min: BIG_BLIND, max: 1000 },
     ],
-    playerChips: 1000,
-    currentBet: 0,
-    playerCurrentBetInRound: 0,
     onAction: vi.fn(),
   }
 
@@ -26,7 +23,7 @@ describe('ActionBar', () => {
   describe('8.1: アクションボタンの表示', () => {
     test('should render fold, check, and bet buttons when those actions are valid', () => {
       // Given: fold, check, bet が有効なアクション
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
         { type: 'bet' },
@@ -43,7 +40,7 @@ describe('ActionBar', () => {
 
     test('should render fold, call, and raise buttons when those actions are valid', () => {
       // Given: fold, call, raise が有効なアクション
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
         { type: 'raise' },
@@ -82,12 +79,12 @@ describe('ActionBar', () => {
 
     test('should call onAction with call immediately when call button is clicked', () => {
       // Given: call が有効なアクション
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 1000 },
       ]
-      const { onAction } = renderActionBar({ validActions, currentBet: 20 })
+      const { onAction } = renderActionBar({ validActions })
 
       // When: Callボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /call/i }))
@@ -100,7 +97,7 @@ describe('ActionBar', () => {
   describe('8.3: 有効/無効アクションの制御', () => {
     test('should disable buttons for actions not in validActions', () => {
       // Given: fold と check のみ有効（bet/call/raise は無効）
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
       ]
@@ -123,7 +120,7 @@ describe('ActionBar', () => {
 
     test('should not call onAction when a disabled button is clicked', () => {
       // Given: fold のみ有効
-      const validActions: PlayerAction[] = [{ type: 'fold' }]
+      const validActions: ValidAction[] = [{ type: 'fold' }]
       const { onAction } = renderActionBar({ validActions })
 
       // When: 無効なボタン（check等）をクリックしようとする
@@ -139,7 +136,7 @@ describe('ActionBar', () => {
 
     test('should enable fold button when fold is in validActions', () => {
       // Given: fold が有効
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
         { type: 'raise' },
@@ -168,12 +165,12 @@ describe('ActionBar', () => {
 
     test('should show chip input area when raise button is clicked', () => {
       // Given: raise が有効なアクション
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 1000 },
       ]
-      renderActionBar({ validActions, currentBet: 20 })
+      renderActionBar({ validActions })
 
       // When: Raiseボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /raise/i }))
@@ -196,7 +193,12 @@ describe('ActionBar', () => {
 
     test('should set bet slider min to BIG_BLIND and max to playerChips', () => {
       // Given: bet が有効で playerChips = 500
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
 
       // When: Betボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
@@ -207,32 +209,32 @@ describe('ActionBar', () => {
       expect(slider.getAttribute('max')).toBe('500')
     })
 
-    test('should set raise slider min to currentBet * 2 and max to playerChips + playerCurrentBetInRound', () => {
-      // Given: raise が有効で currentBet=20, playerChips=500, playerCurrentBetInRound=10
-      const validActions: PlayerAction[] = [
+    test('should set raise slider min and max from ValidAction', () => {
+      // Given: raise が有効で min=30 (currentBet+BIG_BLIND), max=510 (playerCurrentBetInRound+playerChips)
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 510 },
       ]
-      renderActionBar({
-        validActions,
-        currentBet: 20,
-        playerChips: 500,
-        playerCurrentBetInRound: 10,
-      })
+      renderActionBar({ validActions })
 
       // When: Raiseボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /raise/i }))
 
-      // Then: スライダーの min が currentBet * 2 = 40、max が playerChips + playerCurrentBetInRound = 510
+      // Then: スライダーの min/max が ValidAction の値と一致
       const slider = screen.getByRole('slider')
-      expect(slider.getAttribute('min')).toBe('40')
+      expect(slider.getAttribute('min')).toBe('30')
       expect(slider.getAttribute('max')).toBe('510')
     })
 
     test('should sync slider and number input values', () => {
       // Given: bet入力モードが表示されている
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
       // When: スライダーの値を変更する
@@ -246,7 +248,12 @@ describe('ActionBar', () => {
 
     test('should sync number input change to slider', () => {
       // Given: bet入力モードが表示されている
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
       // When: 数値入力の値を変更する
@@ -260,7 +267,12 @@ describe('ActionBar', () => {
 
     test('should call onAction with bet and amount when confirm button is clicked', () => {
       // Given: bet入力モードでチップ数を設定
-      const { onAction } = renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      const { onAction } = renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
       const slider = screen.getByRole('slider')
       fireEvent.change(slider, { target: { value: '100' } })
@@ -274,17 +286,12 @@ describe('ActionBar', () => {
 
     test('should call onAction with raise and amount when confirm button is clicked', () => {
       // Given: raise入力モードでチップ数を設定
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 510 },
       ]
-      const { onAction } = renderActionBar({
-        validActions,
-        currentBet: 20,
-        playerChips: 500,
-        playerCurrentBetInRound: 10,
-      })
+      const { onAction } = renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /raise/i }))
       const slider = screen.getByRole('slider')
       fireEvent.change(slider, { target: { value: '60' } })
@@ -298,7 +305,12 @@ describe('ActionBar', () => {
 
     test('should align bet amount to BIG_BLIND units', () => {
       // Given: bet入力モードが表示されている
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
       // When: スライダーの step 属性を確認する
@@ -312,7 +324,12 @@ describe('ActionBar', () => {
   describe('8.2: チップ入力の境界値', () => {
     test('should default bet amount to BIG_BLIND', () => {
       // Given: bet が有効
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
 
       // When: Betボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
@@ -322,31 +339,31 @@ describe('ActionBar', () => {
       expect(numberInput).toHaveProperty('value', String(BIG_BLIND))
     })
 
-    test('should default raise amount to currentBet * 2', () => {
-      // Given: raise が有効で currentBet=30
-      const validActions: PlayerAction[] = [
+    test('should default raise amount to ValidAction.min', () => {
+      // Given: raise が有効で min=40 (currentBet + BIG_BLIND)
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 40, max: 510 },
       ]
-      renderActionBar({
-        validActions,
-        currentBet: 30,
-        playerChips: 500,
-        playerCurrentBetInRound: 10,
-      })
+      renderActionBar({ validActions })
 
       // When: Raiseボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /raise/i }))
 
-      // Then: 初期値が currentBet * 2 = 60
+      // Then: 初期値が ValidAction.min = 40
       const numberInput = screen.getByRole('spinbutton')
-      expect(numberInput).toHaveProperty('value', '60')
+      expect(numberInput).toHaveProperty('value', '40')
     })
 
     test('should allow all-in when playerChips is less than minimum bet', () => {
-      // Given: チップが BIG_BLIND 未満
-      renderActionBar({ playerChips: 5 })
+      // Given: チップが BIG_BLIND 未満（ドメイン層がmin=5, max=5を設定）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: 5, max: 5 },
+      ]
+      renderActionBar({ validActions })
 
       // When: Betボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
@@ -358,7 +375,12 @@ describe('ActionBar', () => {
 
     test('should hide chip input area when cancel is clicked', () => {
       // Given: bet入力モードが表示されている
-      renderActionBar()
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 1000 },
+      ]
+      renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
       expect(screen.getByRole('slider')).toBeTruthy()
 
@@ -373,7 +395,12 @@ describe('ActionBar', () => {
   describe('dry-violation: デフォルト値とスライダーmin値の一貫性', () => {
     test('should have bet default value equal to slider min', () => {
       // Given: bet が有効で playerChips > BIG_BLIND
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
 
       // When: Betボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
@@ -386,17 +413,12 @@ describe('ActionBar', () => {
 
     test('should have raise default value equal to slider min', () => {
       // Given: raise が有効
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 510 },
       ]
-      renderActionBar({
-        validActions,
-        currentBet: 20,
-        playerChips: 500,
-        playerCurrentBetInRound: 10,
-      })
+      renderActionBar({ validActions })
 
       // When: Raiseボタンをクリックする
       fireEvent.click(screen.getByRole('button', { name: /raise/i }))
@@ -411,7 +433,12 @@ describe('ActionBar', () => {
   describe('8.2: クイックベットボタン', () => {
     test('should provide all-in quick bet button', () => {
       // Given: bet入力モードが表示されている
-      renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
       // When/Then: All-inボタンが存在する
@@ -422,7 +449,12 @@ describe('ActionBar', () => {
 
     test('should set amount to playerChips when all-in button is clicked', () => {
       // Given: bet入力モードでall-inボタンがある
-      const { onAction } = renderActionBar({ playerChips: 500 })
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      const { onAction } = renderActionBar({ validActions })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
       // When: All-inボタンをクリックする

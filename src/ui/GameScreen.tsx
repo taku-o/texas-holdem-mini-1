@@ -1,11 +1,11 @@
-import type { GameState, PlayerAction } from '../domain/types'
+import type { GameState, PlayerAction, ValidAction } from '../domain/types'
 import { TableView } from './TableView'
 import { PlayerSeats } from './PlayerSeats'
 import { ActionBar } from './ActionBar'
 
 export type GameScreenProps = {
   gameState: GameState | null
-  validActions: PlayerAction[]
+  validActions: ValidAction[]
   isHumanTurn: boolean
   onStartGame: () => void
   onAction: (action: PlayerAction) => void
@@ -48,9 +48,6 @@ export function GameScreen({
       {isHumanTurn && humanPlayer && (
         <ActionBar
           validActions={validActions}
-          playerChips={humanPlayer.chips}
-          currentBet={gameState.currentBet}
-          playerCurrentBetInRound={humanPlayer.currentBetInRound}
           onAction={onAction}
         />
       )}

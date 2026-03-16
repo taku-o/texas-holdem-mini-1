@@ -2,12 +2,12 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import { GameScreen } from './GameScreen'
 import { createTestState, card } from '../domain/testHelpers'
-import type { GameState, PlayerAction } from '../domain/types'
+import type { GameState, ValidAction } from '../domain/types'
 
 function createDefaultProps() {
   return {
     gameState: null as GameState | null,
-    validActions: [] as PlayerAction[],
+    validActions: [] as ValidAction[],
     isHumanTurn: false,
     onStartGame: vi.fn(),
     onAction: vi.fn(),
@@ -103,7 +103,7 @@ describe('GameScreen', () => {
         phase: 'preflop',
         currentPlayerIndex: 0,
       })
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
         { type: 'bet' },
@@ -137,7 +137,7 @@ describe('GameScreen', () => {
         phase: 'preflop',
         currentPlayerIndex: 0,
       })
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
         { type: 'bet' },
@@ -155,8 +155,8 @@ describe('GameScreen', () => {
       expect(onAction).toHaveBeenCalledWith({ type: 'fold' })
     })
 
-    test('should pass correct playerChips to ActionBar from human player', () => {
-      // Given: 人間プレイヤーのチップが500
+    test('should pass ValidAction min/max to ActionBar slider', () => {
+      // Given: 人間プレイヤーのチップが500、ValidActionにmin/maxが設定済み
       const gameState = createTestState({
         phase: 'preflop',
         currentPlayerIndex: 0,
@@ -170,17 +170,17 @@ describe('GameScreen', () => {
         })),
         humanPlayerId: 'player-0',
       })
-      const validActions: PlayerAction[] = [
+      const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
-        { type: 'bet' },
+        { type: 'bet', min: 10, max: 500 },
       ]
 
       // When: GameScreenをレンダリングしてbetボタンをクリック
       renderGameScreen({ gameState, validActions, isHumanTurn: true })
       fireEvent.click(screen.getByRole('button', { name: /bet/i }))
 
-      // Then: チップ入力のmaxが人間プレイヤーのチップ数（500）になる
+      // Then: チップ入力のmaxがValidAction.max（500）になる
       const slider = screen.getByRole('slider')
       expect(slider.getAttribute('max')).toBe('500')
     })

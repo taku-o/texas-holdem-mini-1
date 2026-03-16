@@ -1,12 +1,9 @@
 import { useState } from 'react'
-import type { ActionType, PlayerAction } from '../domain/types'
+import type { ActionType, PlayerAction, ValidAction } from '../domain/types'
 import { BIG_BLIND } from '../domain/constants'
 
 export type ActionBarProps = {
-  validActions: PlayerAction[]
-  playerChips: number
-  currentBet: number
-  playerCurrentBetInRound: number
+  validActions: ValidAction[]
   onAction: (action: PlayerAction) => void
 }
 
@@ -16,9 +13,6 @@ const ALL_ACTION_TYPES: ActionType[] = [...IMMEDIATE_ACTIONS, ...CHIP_INPUT_ACTI
 
 export function ActionBar({
   validActions,
-  playerChips,
-  currentBet,
-  playerCurrentBetInRound,
   onAction,
 }: ActionBarProps) {
   const [chipInputMode, setChipInputMode] = useState<'bet' | 'raise' | null>(null)
@@ -26,26 +20,19 @@ export function ActionBar({
 
   const validActionTypes = new Set(validActions.map((a) => a.type))
 
-  function getMinBet(): number {
-    return Math.min(BIG_BLIND, playerChips)
-  }
-
-  function getMinRaise(): number {
-    return Math.min(currentBet * 2, playerChips + playerCurrentBetInRound)
+  function findAction(type: ActionType): ValidAction | undefined {
+    return validActions.find((a) => a.type === type)
   }
 
   function handleButtonClick(actionType: ActionType) {
     if (!validActionTypes.has(actionType)) return
 
-    if (actionType === 'bet') {
-      setChipAmount(getMinBet())
-      setChipInputMode('bet')
-      return
-    }
-
-    if (actionType === 'raise') {
-      setChipAmount(getMinRaise())
-      setChipInputMode('raise')
+    if (CHIP_INPUT_ACTIONS.includes(actionType)) {
+      const action = findAction(actionType)
+      if (action?.min !== undefined) {
+        setChipAmount(action.min)
+      }
+      setChipInputMode(actionType)
       return
     }
 
@@ -63,18 +50,21 @@ export function ActionBar({
   }
 
   function handleAllIn() {
-    if (chipInputMode === 'raise') {
-      setChipAmount(playerChips + playerCurrentBetInRound)
-    } else {
-      setChipAmount(playerChips)
+    if (!chipInputMode) return
+    const action = findAction(chipInputMode)
+    if (action?.max !== undefined) {
+      setChipAmount(action.max)
     }
   }
 
   function getSliderProps(): { min: number; max: number } {
-    if (chipInputMode === 'raise') {
-      return { min: getMinRaise(), max: playerChips + playerCurrentBetInRound }
+    if (chipInputMode) {
+      const action = findAction(chipInputMode)
+      if (action?.min !== undefined && action?.max !== undefined) {
+        return { min: action.min, max: action.max }
+      }
     }
-    return { min: getMinBet(), max: playerChips }
+    return { min: 0, max: 0 }
   }
 
   return (

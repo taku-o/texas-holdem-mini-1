@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo } from 'react'
-import type { GameState, PlayerAction } from '../domain/types'
+import type { GameState, PlayerAction, ValidAction } from '../domain/types'
 import { setupNewGame } from '../domain/gameSetup'
 import { getValidActions } from '../domain/betting'
 import { handlePlayerAction, advanceUntilHumanTurn } from './gameFlow'
 
 type GameController = {
   gameState: GameState | null
-  validActions: PlayerAction[]
+  validActions: ValidAction[]
   isHumanTurn: boolean
   startGame: () => void
   handleAction: (action: PlayerAction) => void

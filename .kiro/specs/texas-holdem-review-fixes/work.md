@@ -48,4 +48,15 @@ npx cc-sdd@latest --lang ja
 
 npx cc-sdd@latest --lang ja
 
+takt --task "/kiro:spec-impl texas-holdem-review-fixes 1"
+
+
+
+
+/kiro-complete-tasks texas-holdem-webapp 9
+
+takt --task "/kiro:spec-impl texas-holdem-webapp 10"
+
+/simplify
+
 

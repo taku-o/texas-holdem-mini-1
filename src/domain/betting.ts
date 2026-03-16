@@ -1,22 +1,29 @@
-import type { GameState, PlayerAction } from './types'
+import type { GameState, PlayerAction, ValidAction } from './types'
+import { BIG_BLIND } from './constants'
 
 export function getValidActions(
   state: GameState,
   playerIndex: number,
-): PlayerAction[] {
+): ValidAction[] {
   const player = state.players[playerIndex]
-  const actions: PlayerAction[] = [{ type: 'fold' }]
+  const actions: ValidAction[] = [{ type: 'fold' }]
 
   if (player.currentBetInRound >= state.currentBet) {
     actions.push({ type: 'check' })
-    if (state.currentBet === 0) {
-      actions.push({ type: 'bet' })
-    } else {
-      actions.push({ type: 'raise' })
+    if (state.currentBet === 0 && player.chips >= BIG_BLIND) {
+      actions.push({ type: 'bet', min: BIG_BLIND, max: player.chips })
     }
   } else {
     actions.push({ type: 'call' })
-    actions.push({ type: 'raise' })
+  }
+
+  if (state.currentBet > 0) {
+    const minRaiseTotal = state.currentBet + BIG_BLIND
+    const minRaiseCost = minRaiseTotal - player.currentBetInRound
+    if (player.chips >= minRaiseCost) {
+      const maxRaiseTotal = player.currentBetInRound + player.chips
+      actions.push({ type: 'raise', min: minRaiseTotal, max: maxRaiseTotal })
+    }
   }
 
   return actions
@@ -62,6 +69,12 @@ export function applyAction(
         throw new Error('Bet action requires amount')
       }
       const betAmount = action.amount
+      if (betAmount > player.chips) {
+        throw new Error('Bet amount exceeds player chips')
+      }
+      if (betAmount < BIG_BLIND && betAmount < player.chips) {
+        throw new Error('Bet amount is below minimum')
+      }
       player.chips -= betAmount
       player.currentBetInRound = betAmount
       pot += betAmount
@@ -76,6 +89,13 @@ export function applyAction(
       }
       const raiseTotal = action.amount
       const raiseAmount = raiseTotal - player.currentBetInRound
+      if (raiseAmount > player.chips) {
+        throw new Error('Raise amount exceeds player chips')
+      }
+      const minRaise = currentBet + BIG_BLIND
+      if (raiseTotal < minRaise && raiseTotal < player.currentBetInRound + player.chips) {
+        throw new Error('Raise is below minimum')
+      }
       player.chips -= raiseAmount
       player.currentBetInRound = raiseTotal
       pot += raiseAmount
@@ -102,7 +122,11 @@ export function isBettingRoundComplete(state: GameState): boolean {
   if (nonFolded.length <= 1) return true
 
   if (state.lastAggressorIndex !== null) {
-    return state.currentPlayerIndex === state.lastAggressorIndex
+    const aggressor = state.players[state.lastAggressorIndex]
+    if (!aggressor.folded && aggressor.chips > 0 &&
+        state.currentPlayerIndex === state.lastAggressorIndex) {
+      return true
+    }
   }
 
   return nonFolded.every(

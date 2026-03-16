@@ -4,6 +4,7 @@ export {
   applyAction,
   isBettingRoundComplete,
 } from './betting'
+export type { ValidAction } from './types'
 export {
   evaluateShowdown,
   determineWinners,
