@@ -293,6 +293,70 @@ describe('dealing', () => {
       expect(unique.size).toBe(allCards.length)
     })
 
+    test('should not deal cards to folded players', () => {
+      // Given: index 2のプレイヤーがfolded（チップ0を想定）
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          folded: i === 2,
+        })
+      )
+      const state = createTestState({ players })
+
+      // When: ホールカードを配る
+      const result = dealHoleCards(state)
+
+      // Then: foldedプレイヤーにはカードが配られない
+      expect(result.players[2].holeCards).toHaveLength(0)
+      // 他のプレイヤーには配られる
+      for (const [i, player] of result.players.entries()) {
+        if (i !== 2) {
+          expect(player.holeCards).toHaveLength(2)
+        }
+      }
+    })
+
+    test('should consume deck cards only for non-folded players', () => {
+      // Given: 1人のプレイヤーがfolded
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          folded: i === 3,
+        })
+      )
+      const state = createTestState({ players })
+      const initialDeckSize = state.deck.length
+
+      // When: ホールカードを配る
+      const result = dealHoleCards(state)
+
+      // Then: デッキからアクティブプレイヤー分（4人×2枚=8枚）のみ消費
+      const activeCount = 4
+      expect(result.deck).toHaveLength(initialDeckSize - activeCount * 2)
+    })
+
+    test('should deal unique cards to non-folded players when some are folded', () => {
+      // Given: 2人のプレイヤーがfolded
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          folded: i === 1 || i === 4,
+        })
+      )
+      const state = createTestState({ players })
+
+      // When: ホールカードを配る
+      const result = dealHoleCards(state)
+
+      // Then: 配られたカードがすべてユニーク
+      const allCards = result.players.flatMap((p) => p.holeCards)
+      const serialized = allCards.map((c) => `${c.suit}-${c.rank}`)
+      const unique = new Set(serialized)
+      expect(unique.size).toBe(allCards.length)
+      // 3人 × 2枚 = 6枚
+      expect(allCards).toHaveLength(6)
+    })
+
     test('should not mutate original state', () => {
       // Given: 初期状態
       const state = createTestState()

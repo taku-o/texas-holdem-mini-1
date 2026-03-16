@@ -38,11 +38,16 @@ export function postBlinds(state: GameState): GameState {
 }
 
 export function dealHoleCards(state: GameState): GameState {
-  const players = state.players.map((p, i) => ({
-    ...p,
-    holeCards: [state.deck[i * 2], state.deck[i * 2 + 1]],
-  }))
-  const deck = state.deck.slice(state.players.length * 2)
+  let deckIndex = 0
+  const players = state.players.map((p) => {
+    if (p.folded) {
+      return { ...p, holeCards: [] }
+    }
+    const holeCards = [state.deck[deckIndex], state.deck[deckIndex + 1]]
+    deckIndex += 2
+    return { ...p, holeCards }
+  })
+  const deck = state.deck.slice(deckIndex)
   return { ...state, players, deck }
 }
 

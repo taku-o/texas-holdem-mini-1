@@ -378,6 +378,69 @@ describe('handProgression', () => {
       expect(result.players[1].currentBetInRound).toBe(BIG_BLIND)
     })
 
+    test('should keep chips-0 player folded in next hand', () => {
+      // Given: index 3のプレイヤーのチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 3 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ players, dealerIndex: 0 })
+
+      // When: 次のハンドを開始する
+      const result = startNextHand(state, () => 0.5)
+
+      // Then: チップ0のプレイヤーはfolded=trueのままで、ホールカードは空
+      expect(result.players[3].folded).toBe(true)
+      expect(result.players[3].holeCards).toHaveLength(0)
+    })
+
+    test('should not deal hole cards to chips-0 player', () => {
+      // Given: index 2のプレイヤーのチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 2 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ players, dealerIndex: 0 })
+
+      // When: 次のハンドを開始する
+      const result = startNextHand(state, () => 0.5)
+
+      // Then: チップ0プレイヤーにはカードが配られず、アクティブプレイヤーには配られる
+      expect(result.players[2].holeCards).toHaveLength(0)
+      for (const player of result.players) {
+        if (player.chips > 0 || player.currentBetInRound > 0) {
+          expect(player.holeCards).toHaveLength(2)
+        }
+      }
+    })
+
+    test('should keep multiple chips-0 players folded in next hand', () => {
+      // Given: index 1, 3のプレイヤーのチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: (i === 1 || i === 3) ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ players, dealerIndex: 0 })
+
+      // When: 次のハンドを開始する
+      const result = startNextHand(state, () => 0.5)
+
+      // Then: 両方のチップ0プレイヤーがfolded=trueで、ホールカードは空
+      expect(result.players[1].folded).toBe(true)
+      expect(result.players[1].holeCards).toHaveLength(0)
+      expect(result.players[3].folded).toBe(true)
+      expect(result.players[3].holeCards).toHaveLength(0)
+    })
+
     test('should correctly assign dealer when consecutive players have 0 chips', () => {
       // Given: index 1, 2, 3 のチップが0
       const players = Array.from({ length: 5 }, (_, i) =>

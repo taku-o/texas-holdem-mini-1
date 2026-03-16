@@ -80,7 +80,7 @@ export function startNextHand(
   const players = state.players.map((p) => ({
     ...p,
     holeCards: [] as Card[],
-    folded: false,
+    folded: p.chips === 0,
     currentBetInRound: 0,
   }))
 
