@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { decideAction } from './cpuStrategy'
-import { getValidActions } from './betting'
+import { applyAction, getValidActions } from './betting'
 import { BIG_BLIND } from './constants'
 import type { GameState, PlayerAction } from './types'
 import { card, createTestPlayer, createTestState as createBaseTestState } from './testHelpers'
@@ -808,6 +808,224 @@ describe('decideAction', () => {
         expect(action.amount!).toBeLessThanOrEqual(limitedChips)
         expect(action.amount!).toBeGreaterThanOrEqual(BIG_BLIND)
       }
+    })
+  })
+
+  describe('レイズ/ベット額がgetValidActionsのmin/max範囲にクランプされる', () => {
+    test('should clamp raise amount to minRaiseTotal when calculateBetAmount returns below min', () => {
+      // Given: ショートスタックCPU（currentBetInRound=10, chips=30）でstrong hand
+      // currentBet=25 → minRaiseTotal=35, maxRaiseTotal=40
+      // calculateBetAmount('strong', 30, 25) → 30 （minRaiseTotal未満）
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 30 : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: i === 1 ? 10 : 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'preflop',
+        players,
+        currentBet: 25,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: raise を選択した場合、amount が minRaiseTotal(35) 以上であること
+      const validActions = getValidActions(state, 1)
+      const raiseAction = validActions.find((a) => a.type === 'raise')
+      if (action.type === 'raise') {
+        expect(raiseAction).toBeDefined()
+        expect(action.amount!).toBeGreaterThanOrEqual(raiseAction!.min!)
+        expect(action.amount!).toBeLessThanOrEqual(raiseAction!.max!)
+      }
+    })
+
+    test('should clamp raise amount to maxRaiseTotal when calculateBetAmount exceeds max', () => {
+      // Given: ショートスタックCPU（currentBetInRound=0, chips=25）でstrong hand
+      // currentBet=20 → minRaiseTotal=30, maxRaiseTotal=25
+      // chips=25 だが currentBetInRound=0 なので maxRaiseTotal=25
+      // calculateBetAmount('strong', 25, 20) → min(max(floor(max(30,40)/10)*10, 10), 25) = 25
+      // ただし minRaiseTotal=30 なので raise 不可（chips < minRaiseCost=30）
+      // → chips をちょうど minRaiseCost に設定する
+      // currentBetInRound=5, chips=30, currentBet=20
+      // minRaiseTotal=30, minRaiseCost=25, maxRaiseTotal=35
+      // calculateBetAmount('strong', 30, 20) → min(max(floor(max(30,40)/10)*10, 10), 30) = 30
+      // 30 >= 30 → 範囲内だが max=35 以下であることも検証
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 30 : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: i === 1 ? 5 : 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'preflop',
+        players,
+        currentBet: 20,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: raise を選択した場合、amount が maxRaiseTotal 以下であること
+      const validActions = getValidActions(state, 1)
+      const raiseAction = validActions.find((a) => a.type === 'raise')
+      if (action.type === 'raise') {
+        expect(raiseAction).toBeDefined()
+        expect(action.amount!).toBeLessThanOrEqual(raiseAction!.max!)
+        expect(action.amount!).toBeGreaterThanOrEqual(raiseAction!.min!)
+      }
+    })
+
+    test('should clamp bet amount within getValidActions min/max range', () => {
+      // Given: ベット可能な状態でstrong hand、チップが少ない
+      // currentBet=0, chips=15 → bet min=10, max=15
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 15 : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'flop',
+        players,
+        communityCards: [
+          card('A', 'diamonds'),
+          card('5', 'clubs'),
+          card('9', 'hearts'),
+        ],
+        currentBet: 0,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: bet を選択した場合、amount が getValidActions の min/max 範囲内
+      const validActions = getValidActions(state, 1)
+      const betAction = validActions.find((a) => a.type === 'bet')
+      if (action.type === 'bet') {
+        expect(betAction).toBeDefined()
+        expect(action.amount!).toBeGreaterThanOrEqual(betAction!.min!)
+        expect(action.amount!).toBeLessThanOrEqual(betAction!.max!)
+      }
+    })
+
+    test('should clamp medium strength raise within valid range', () => {
+      // Given: medium strengthのCPUがショートスタックでraise
+      // currentBetInRound=10, chips=30, currentBet=25
+      // minRaiseTotal=35, maxRaiseTotal=40
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 30 : 1000,
+          holeCards:
+            i === 1
+              ? [card('Q', 'spades'), card('J', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: i === 1 ? 10 : 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'preflop',
+        players,
+        currentBet: 25,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する（low乱数＝medium strengthでraise選択）
+      const action = decideAction(state, 1, alwaysLow)
+
+      // Then: raise を選択した場合、amount が有効範囲内
+      const validActions = getValidActions(state, 1)
+      const raiseAction = validActions.find((a) => a.type === 'raise')
+      if (action.type === 'raise') {
+        expect(raiseAction).toBeDefined()
+        expect(action.amount!).toBeGreaterThanOrEqual(raiseAction!.min!)
+        expect(action.amount!).toBeLessThanOrEqual(raiseAction!.max!)
+      }
+    })
+
+    test('should produce raise amount that applyAction accepts without error', () => {
+      // Given: ショートスタックでraise額がクランプされるケース
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 30 : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: i === 1 ? 10 : 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'preflop',
+        players,
+        currentBet: 25,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定し、その結果をapplyActionに渡す
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: applyAction がエラーをスローしない
+      expect(() => applyAction(state, 1, action)).not.toThrow()
+    })
+
+    test('should produce bet amount that applyAction accepts without error', () => {
+      // Given: ベット可能な状態でstrong hand
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? 15 : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'flop',
+        players,
+        communityCards: [
+          card('A', 'diamonds'),
+          card('5', 'clubs'),
+          card('9', 'hearts'),
+        ],
+        currentBet: 0,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定し、その結果をapplyActionに渡す
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: applyAction がエラーをスローしない
+      expect(() => applyAction(state, 1, action)).not.toThrow()
     })
   })
 
