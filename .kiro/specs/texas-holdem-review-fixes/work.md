@@ -77,5 +77,8 @@ takt --task "/kiro:spec-impl texas-holdem-review-fixes 7"
 
 takt --task "/kiro:spec-impl texas-holdem-review-fixes 8"
 
+こちらお願いします
+> テストコードの重複を修正してよいですか？ createGameState(), createHumanTurnState(), fixedRandom, defaultDeck を共通化する形です。
 
+/kiro-complete-tasks texas-holdem-review-fixes 8
 

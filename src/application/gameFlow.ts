@@ -48,10 +48,15 @@ function skipToShowdownAndResolve(
   return resolveAndCheckGameOver(resolved, randomFn)
 }
 
-function processCpuTurnsAndPhases(
+function yieldToMainThread(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+async function processCpuTurnsAndPhases(
   state: GameState,
   randomFn: () => number,
-): GameState {
+  onProgress?: (state: GameState) => void,
+): Promise<GameState> {
   let current = state
   let iterations = 0
 
@@ -95,23 +100,27 @@ function processCpuTurnsAndPhases(
       randomFn,
     )
     current = applyAction(current, current.currentPlayerIndex, cpuAction)
+    onProgress?.(current)
+    await yieldToMainThread()
   }
 
   return current
 }
 
-export function handlePlayerAction(
+export async function handlePlayerAction(
   state: GameState,
   action: PlayerAction,
   randomFn: () => number,
-): GameState {
+  onProgress?: (state: GameState) => void,
+): Promise<GameState> {
   const afterAction = applyAction(state, state.currentPlayerIndex, action)
-  return processCpuTurnsAndPhases(afterAction, randomFn)
+  return processCpuTurnsAndPhases(afterAction, randomFn, onProgress)
 }
 
-export function advanceUntilHumanTurn(
+export async function advanceUntilHumanTurn(
   state: GameState,
   randomFn: () => number,
-): GameState {
-  return processCpuTurnsAndPhases(state, randomFn)
+  onProgress?: (state: GameState) => void,
+): Promise<GameState> {
+  return processCpuTurnsAndPhases(state, randomFn, onProgress)
 }

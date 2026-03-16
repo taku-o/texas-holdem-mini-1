@@ -7,13 +7,12 @@ import {
   calcTotalChips,
   card,
   createTestPlayer,
-  createTestState as createBaseTestState,
 } from '../domain/testHelpers'
-
-const fixedRandom = () => 0.5
-
-// handlePlayerAction はハンド全体を処理するため、有効なデッキが必要
-const defaultDeck = setupNewGame(fixedRandom).deck
+import {
+  fixedRandom,
+  createGameState,
+  createHumanTurnState,
+} from './gameFlow.testHelpers'
 
 function expectHumanTurnOrGameOver(state: GameState): void {
   const humanIndex = state.players.findIndex((p) => p.isHuman)
@@ -32,50 +31,15 @@ function expectHumanTurnOrHandOver(state: GameState): void {
   expect(isHumanTurn || isHandOver).toBe(true)
 }
 
-function createGameState(overrides: Partial<GameState> = {}): GameState {
-  return createBaseTestState({
-    phase: 'preflop',
-    pot: 15,
-    currentBet: BIG_BLIND,
-    currentPlayerIndex: 0,
-    deck: defaultDeck,
-    ...overrides,
-  })
-}
-
-/**
- * 人間がplayer-0、CPU がplayer-1〜4 のプリフロップ状態を作る。
- * currentPlayerIndex=0（人間の番）から始まる。
- */
-function createHumanTurnState(
-  overrides: Partial<GameState> = {},
-): GameState {
-  const players = Array.from({ length: 5 }, (_, i) =>
-    createTestPlayer({
-      id: `player-${i}`,
-      isHuman: i === 0,
-      chips: 1000,
-      holeCards: [card('A', 'spades'), card('K', 'hearts')],
-      currentBetInRound: i <= 2 ? BIG_BLIND : 0,
-    }),
-  )
-  return createGameState({
-    players,
-    currentPlayerIndex: 0,
-    lastAggressorIndex: null,
-    ...overrides,
-  })
-}
-
 describe('gameFlow', () => {
   describe('handlePlayerAction', () => {
     describe('人間のアクション適用', () => {
-      test('should apply fold action and advance through CPU turns', () => {
+      test('should apply fold action and advance through CPU turns', async () => {
         // Given: 人間の番（player-0）
         const state = createHumanTurnState()
 
         // When: 人間がフォールドする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'fold' },
           fixedRandom,
@@ -85,7 +49,7 @@ describe('gameFlow', () => {
         expectHumanTurnOrGameOver(result)
       })
 
-      test('should apply call action from human player', () => {
+      test('should apply call action from human player', async () => {
         // Given: 人間の番でcallが必要な状態
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -103,7 +67,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がコールする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'call' },
           fixedRandom,
@@ -118,7 +82,7 @@ describe('gameFlow', () => {
         expect(totalChips).toBe(initialTotal)
       })
 
-      test('should apply bet action with amount from human player', () => {
+      test('should apply bet action with amount from human player', async () => {
         // Given: 人間の番でbet可能な状態（currentBet=0）
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -142,7 +106,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がベットする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'bet', amount: BIG_BLIND * 2 },
           fixedRandom,
@@ -159,17 +123,17 @@ describe('gameFlow', () => {
     })
 
     describe('CPU自動ターンの処理', () => {
-      test('should process CPU turns until human turn comes back', () => {
+      test('should process CPU turns until human turn comes back', async () => {
         // Given: setupNewGameで初期化（CPUの行動が決定的になるfixedRandom）
         const state = setupNewGame(fixedRandom)
         const humanIndex = state.players.findIndex((p) => p.isHuman)
         expect(humanIndex).toBeGreaterThanOrEqual(0)
 
         // setupNewGame後、人間の番になるまでadvanceUntilHumanTurnを呼ぶ
-        const readyState = advanceUntilHumanTurn(state, fixedRandom)
+        const readyState = await advanceUntilHumanTurn(state, fixedRandom)
 
         // When: 人間がコールする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           readyState,
           { type: 'call' },
           fixedRandom,
@@ -179,7 +143,7 @@ describe('gameFlow', () => {
         expectHumanTurnOrHandOver(result)
       })
 
-      test('should handle CPU turns resulting in all-fold (uncontested pot)', () => {
+      test('should handle CPU turns resulting in all-fold (uncontested pot)', async () => {
         // Given: 2人残り（人間とCPU1人）、CPUが弱いハンドでフォールドする状況
         const players = [
           createTestPlayer({
@@ -235,7 +199,7 @@ describe('gameFlow', () => {
           calcTotalChips(state)
 
         // When: 人間がレイズする（CPUがフォールドする可能性が高い状況）
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'raise', amount: BIG_BLIND * 10 },
           () => 0.9,
@@ -251,7 +215,7 @@ describe('gameFlow', () => {
     })
 
     describe('フェーズ遷移', () => {
-      test('should advance phase when betting round completes after human action', () => {
+      test('should advance phase when betting round completes after human action', async () => {
         // Given: 全員がBIG_BLINDをコール済みで、人間が最後のプレイヤー
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -270,7 +234,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がコールしてベッティングラウンドが完了する
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'call' },
           fixedRandom,
@@ -283,17 +247,15 @@ describe('gameFlow', () => {
     })
 
     describe('ハンド終了 → 次ハンド or ゲーム終了', () => {
-      test('should start next hand when hand ends and game is not over', () => {
+      test('should start next hand when hand ends and game is not over', async () => {
         // Given: setupNewGameで完全な初期状態を作成
         const fullState = setupNewGame(fixedRandom)
 
-        // 全員フォールドさせて人間以外1人だけ残す（ショーダウンまで行かずに終了）
-        let state = fullState
         // player-0（人間）の番まで進める
-        const readyState = advanceUntilHumanTurn(state, fixedRandom)
+        const readyState = await advanceUntilHumanTurn(fullState, fixedRandom)
 
         // When: 人間がフォールドして、ハンドが終了する
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           readyState,
           { type: 'fold' },
           fixedRandom,
@@ -311,7 +273,7 @@ describe('gameFlow', () => {
         }
       })
 
-      test('should set phase to idle and gameOverReason when game ends', () => {
+      test('should set phase to idle and gameOverReason when game ends', async () => {
         // Given: 人間のチップが残りわずか（フォールドでブラインド分失う）
         const players = [
           createTestPlayer({
@@ -359,7 +321,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がフォールドする（チップ0なのでゲーム終了になるはず）
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'fold' },
           fixedRandom,
@@ -370,7 +332,7 @@ describe('gameFlow', () => {
         expect(result.gameOverReason).toBeDefined()
       })
 
-      test('should set gameOverReason when all CPUs are eliminated', () => {
+      test('should set gameOverReason when all CPUs are eliminated', async () => {
         // Given: CPU全員のチップが0で、人間が最後のポットを取る状況
         const players = [
           createTestPlayer({
@@ -425,7 +387,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がレイズ（CPU-1がフォールドしてゲーム終了）
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'raise', amount: BIG_BLIND * 3 },
           () => 0.9,
@@ -438,15 +400,15 @@ describe('gameFlow', () => {
     })
 
     describe('チップ保存則', () => {
-      test('should preserve total chips through handlePlayerAction', () => {
+      test('should preserve total chips through handlePlayerAction', async () => {
         // Given: setupNewGameで初期化した状態
         const state = setupNewGame(fixedRandom)
-        const readyState = advanceUntilHumanTurn(state, fixedRandom)
+        const readyState = await advanceUntilHumanTurn(state, fixedRandom)
         const expectedTotal = INITIAL_CHIPS * PLAYER_COUNT
         const initialTotal = calcTotalChips(readyState)
 
         // When: 人間がコールする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           readyState,
           { type: 'call' },
           fixedRandom,
@@ -461,7 +423,7 @@ describe('gameFlow', () => {
     })
 
     describe('エッジケース', () => {
-      test('should handle human raise followed by CPU re-raise cycle', () => {
+      test('should handle human raise followed by CPU re-raise cycle', async () => {
         // Given: フロップで人間がベットする
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -490,7 +452,7 @@ describe('gameFlow', () => {
         })
 
         // When: 人間がベットする
-        const result = handlePlayerAction(
+        const result = await handlePlayerAction(
           state,
           { type: 'bet', amount: BIG_BLIND * 2 },
           fixedRandom,
@@ -512,14 +474,14 @@ describe('gameFlow', () => {
 
   describe('advanceUntilHumanTurn', () => {
     describe('人間が最初のプレイヤーの場合', () => {
-      test('should return immediately when current player is human', () => {
+      test('should return immediately when current player is human', async () => {
         // Given: 人間の番
         const state = createHumanTurnState({
           currentPlayerIndex: 0,
         })
 
         // When: advanceUntilHumanTurnを呼ぶ
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: 状態が大きく変わらない（人間の番のまま）
         expect(result.currentPlayerIndex).toBe(0)
@@ -528,7 +490,7 @@ describe('gameFlow', () => {
     })
 
     describe('CPUターンの消化', () => {
-      test('should process CPU turns until human turn', () => {
+      test('should process CPU turns until human turn', async () => {
         // Given: CPUの番から始まる状態（player-1が現在のプレイヤー）
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -554,7 +516,7 @@ describe('gameFlow', () => {
         })
 
         // When: CPUターンを消化する
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: 人間の番になっているか、ハンドが終了している
         expectHumanTurnOrHandOver(result)
@@ -562,7 +524,7 @@ describe('gameFlow', () => {
     })
 
     describe('ショーダウン処理', () => {
-      test('should evaluate showdown when phase reaches showdown', () => {
+      test('should evaluate showdown when phase reaches showdown', async () => {
         // Given: ショーダウンフェーズの状態
         const players = Array.from({ length: 5 }, (_, i) =>
           createTestPlayer({
@@ -595,7 +557,7 @@ describe('gameFlow', () => {
           calcTotalChips(state)
 
         // When: advanceUntilHumanTurnを呼ぶ
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ショーダウンが処理され、チップ保存則が守られている
         const resultTotal =
@@ -607,7 +569,7 @@ describe('gameFlow', () => {
     })
 
     describe('全員all-in時のフェーズスキップ', () => {
-      test('should skip betting rounds when all non-folded players are all-in', () => {
+      test('should skip betting rounds when all non-folded players are all-in', async () => {
         // Given: 非フォールドプレイヤーが全員all-in（chips=0）
         const players = [
           createTestPlayer({
@@ -657,7 +619,7 @@ describe('gameFlow', () => {
         })
 
         // When: advanceUntilHumanTurnを呼ぶ
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ショーダウンまで自動進行してポットが分配されている
         expect(result.pot).toBe(0)
@@ -665,7 +627,7 @@ describe('gameFlow', () => {
     })
 
     describe('1人だけチップ残りの場合のフェーズスキップ', () => {
-      test('should skip to showdown when only one non-folded player has chips', () => {
+      test('should skip to showdown when only one non-folded player has chips', async () => {
         // Given: 非フォールド2人のうち1人だけall-in（chips=0）
         const players = [
           createTestPlayer({
@@ -715,7 +677,7 @@ describe('gameFlow', () => {
         })
 
         // When: advanceUntilHumanTurnを呼ぶ
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ショーダウンまで自動進行してポットが分配されている
         // ゲームオーバーか新しいハンドが開始されている
@@ -724,7 +686,7 @@ describe('gameFlow', () => {
     })
 
     describe('非争ポットの解決', () => {
-      test('should resolve uncontested pot when only one player remains', () => {
+      test('should resolve uncontested pot when only one player remains', async () => {
         // Given: 1人を除いて全員フォールド、CPUの番
         const players = [
           createTestPlayer({
@@ -773,7 +735,7 @@ describe('gameFlow', () => {
         })
 
         // When: advanceUntilHumanTurnを呼ぶ
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ポットが分配されている（ゲーム続行時は新ハンドのブラインドがポストされる）
         expect(calcTotalChips(result)).toBe(900 + 900 + 200)
@@ -783,12 +745,12 @@ describe('gameFlow', () => {
     })
 
     describe('ゲーム開始直後のCPU自動進行', () => {
-      test('should work with setupNewGame to advance through initial CPU turns', () => {
+      test('should work with setupNewGame to advance through initial CPU turns', async () => {
         // Given: setupNewGameで初期化した状態
         const state = setupNewGame(fixedRandom)
 
         // When: ゲーム開始後にCPUターンを消化
-        const result = advanceUntilHumanTurn(state, fixedRandom)
+        const result = await advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: 人間の番になっているか、ハンドが終了している
         expectHumanTurnOrHandOver(result)
@@ -797,10 +759,10 @@ describe('gameFlow', () => {
   })
 
   describe('統合テスト: 完全なゲームフロー', () => {
-    test('should handle a complete hand flow through handlePlayerAction', () => {
+    test('should handle a complete hand flow through handlePlayerAction', async () => {
       // Given: ゲーム開始
       const state = setupNewGame(fixedRandom)
-      const readyState = advanceUntilHumanTurn(state, fixedRandom)
+      const readyState = await advanceUntilHumanTurn(state, fixedRandom)
       const expectedTotal = INITIAL_CHIPS * PLAYER_COUNT
 
       // When: 人間がコールを繰り返し、最終的にハンドが終了するまで
@@ -819,7 +781,7 @@ describe('gameFlow', () => {
           current.currentPlayerIndex === humanIndex &&
           !current.players[humanIndex].folded
         ) {
-          current = handlePlayerAction(
+          current = await handlePlayerAction(
             current,
             { type: 'call' },
             fixedRandom,
@@ -836,10 +798,10 @@ describe('gameFlow', () => {
       expect(totalChips).toBe(expectedTotal)
     })
 
-    test('should handle game over scenario when human folds repeatedly', () => {
+    test('should handle game over scenario when human folds repeatedly', async () => {
       // Given: ゲーム開始
       let current = setupNewGame(fixedRandom)
-      current = advanceUntilHumanTurn(current, fixedRandom)
+      current = await advanceUntilHumanTurn(current, fixedRandom)
       let iterations = 0
       const maxIterations = 500
 
@@ -850,7 +812,7 @@ describe('gameFlow', () => {
           current.currentPlayerIndex === humanIndex &&
           !current.players[humanIndex].folded
         ) {
-          current = handlePlayerAction(
+          current = await handlePlayerAction(
             current,
             { type: 'fold' },
             fixedRandom,

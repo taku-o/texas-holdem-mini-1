@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import App from './App'
 
@@ -42,14 +42,15 @@ describe('App', () => {
     expect(seatElements).toHaveLength(5)
   })
 
-  test('should not show start button during active game', () => {
+  test('should not show start button during active game', async () => {
     // Given: ゲームを開始済み
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: /ゲーム開始/i }))
 
-    // When: ゲーム中の画面を確認する
-
-    // Then: ゲーム開始ボタンは表示されない
-    expect(screen.queryByRole('button', { name: /^ゲーム開始$/i })).toBeNull()
+    // When: ゲーム中の画面を確認する（async処理完了を待つ）
+    await waitFor(() => {
+      // Then: ゲーム開始ボタンは表示されない
+      expect(screen.queryByRole('button', { name: /^ゲーム開始$/i })).toBeNull()
+    })
   })
 })
