@@ -1,5 +1,7 @@
 # Product Overview
 
+<!-- updated_at: 2026-03-16 — steering 更新 -->
+
 テキサスホールデムのブラウザ向けWebアプリケーション。人間1人＋CPU4人＋ディーラーCPU1人の計6人でプレイするシングルプレイヤー型ポーカーゲーム。
 
 ## Core Capabilities

@@ -219,10 +219,10 @@ takt
 
 /kiro-complete-tasks texas-holdem-webapp 10
 
+commit
+pr
 
-
-
-
+/review 4
 
 
 

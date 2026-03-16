@@ -1,6 +1,6 @@
 # Technology Stack
 
-<!-- updated_at: 2026-03-15 — 設計・リサーチ確定内容を反映 -->
+<!-- updated_at: 2026-03-16 — 実装済み構成・コマンドを反映 -->
 
 ## Architecture
 
@@ -38,10 +38,10 @@
 ### Common Commands
 
 ```bash
-# 実装開始後に具体的なコマンドを記載
-# Dev: npm run dev
-# Build: npm run build
-# Test: npm test
+npm run dev     # 開発サーバー（Vite）
+npm run build   # TypeScript ビルド + Vite ビルド
+npm run test    # 単体テスト（Vitest）
+npm run preview # ビルド後のプレビュー
 ```
 
 ## Key Technical Decisions

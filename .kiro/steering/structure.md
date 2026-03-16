@@ -1,6 +1,6 @@
 # Project Structure
 
-<!-- updated_at: 2026-03-15 — 設計確定内容を反映 -->
+<!-- updated_at: 2026-03-16 — 実装済み src 構成を反映 -->
 
 ## Organization Philosophy
 
@@ -28,10 +28,11 @@
 ### アプリケーションソース
 **Location**: `src/`
 **Purpose**: React + TypeScript のソースコード。レイヤー分離型。
+**Layout**: `src/domain/`（ゲームロジック）、`src/application/`（GameController・フロー）、`src/ui/`（コンポーネント）。
 **Pattern**:
-- UI層のコンポーネント（GameScreen, TableView, PlayerSeats, ActionBar）
-- Application層（GameController: 状態管理・フロー制御）
-- Domain層（GameEngine, HandEvaluator, CPUStrategy: 純粋ロジック）
+- UI層（`src/ui/`）: GameScreen, TableView, PlayerSeats, ActionBar, CardView 等
+- Application層（`src/application/`）: useGameController, gameFlow（状態管理・フロー制御）
+- Domain層（`src/domain/`）: gameEngine, handEvaluator, cpuStrategy, dealing, betting, showdown 等の純粋ロジック
 
 ## Naming Conventions
 
