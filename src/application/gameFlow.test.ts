@@ -4,6 +4,7 @@ import { setupNewGame } from '../domain/gameEngine'
 import { BIG_BLIND, INITIAL_CHIPS, PLAYER_COUNT } from '../domain/constants'
 import type { GameState, PlayerAction } from '../domain/types'
 import {
+  calcTotalChips,
   card,
   createTestPlayer,
   createTestState as createBaseTestState,
@@ -13,6 +14,23 @@ const fixedRandom = () => 0.5
 
 // handlePlayerAction はハンド全体を処理するため、有効なデッキが必要
 const defaultDeck = setupNewGame(fixedRandom).deck
+
+function expectHumanTurnOrGameOver(state: GameState): void {
+  const humanIndex = state.players.findIndex((p) => p.isHuman)
+  const isHumanTurn = state.currentPlayerIndex === humanIndex
+  const isGameOver = state.phase === 'idle'
+  expect(isHumanTurn || isGameOver).toBe(true)
+}
+
+function expectHumanTurnOrHandOver(state: GameState): void {
+  const humanIndex = state.players.findIndex((p) => p.isHuman)
+  const isHumanTurn = state.currentPlayerIndex === humanIndex
+  const isHandOver =
+    state.phase === 'showdown' ||
+    state.phase === 'idle' ||
+    state.players.filter((p) => !p.folded).length <= 1
+  expect(isHumanTurn || isHandOver).toBe(true)
+}
 
 function createGameState(overrides: Partial<GameState> = {}): GameState {
   return createBaseTestState({
@@ -64,10 +82,7 @@ describe('gameFlow', () => {
         )
 
         // Then: ハンドが処理され、次のハンドまたはゲーム終了に到達している
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isGameOver = result.phase === 'idle'
-        expect(isHumanTurn || isGameOver).toBe(true)
+        expectHumanTurnOrGameOver(result)
       })
 
       test('should apply call action from human player', () => {
@@ -97,9 +112,9 @@ describe('gameFlow', () => {
         // Then: ハンドが処理され、有効な状態が返される
         expect(result).toBeDefined()
         const totalChips =
-          result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot
+          calcTotalChips(result)
         const initialTotal =
-          state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
+          calcTotalChips(state)
         expect(totalChips).toBe(initialTotal)
       })
 
@@ -136,9 +151,9 @@ describe('gameFlow', () => {
         // Then: ハンドが処理され、チップ保存則が守られている
         expect(result).toBeDefined()
         const totalChips =
-          result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot
+          calcTotalChips(result)
         const initialTotal =
-          state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
+          calcTotalChips(state)
         expect(totalChips).toBe(initialTotal)
       })
     })
@@ -161,13 +176,7 @@ describe('gameFlow', () => {
         )
 
         // Then: 結果の状態では人間の番に戻っているか、ハンドが終了している
-        const resultHumanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === resultHumanIndex
-        const isHandOver =
-          result.phase === 'showdown' ||
-          result.phase === 'idle' ||
-          result.players.filter((p) => !p.folded).length <= 1
-        expect(isHumanTurn || isHandOver).toBe(true)
+        expectHumanTurnOrHandOver(result)
       })
 
       test('should handle CPU turns resulting in all-fold (uncontested pot)', () => {
@@ -223,7 +232,7 @@ describe('gameFlow', () => {
           lastAggressorIndex: 0,
         })
         const initialTotal =
-          state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
+          calcTotalChips(state)
 
         // When: 人間がレイズする（CPUがフォールドする可能性が高い状況）
         const result = handlePlayerAction(
@@ -234,13 +243,10 @@ describe('gameFlow', () => {
 
         // Then: ポットが解決され、チップ保存則が守られている
         const resultTotal =
-          result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot
+          calcTotalChips(result)
         expect(resultTotal).toBe(initialTotal)
         // 人間の番に戻っているか、ゲーム終了している
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isGameOver = result.phase === 'idle'
-        expect(isHumanTurn || isGameOver).toBe(true)
+        expectHumanTurnOrGameOver(result)
       })
     })
 
@@ -272,10 +278,7 @@ describe('gameFlow', () => {
 
         // Then: ハンドが処理され、有効な状態が返される（フェーズが進んだか、新しいハンドが始まっている）
         expect(result).toBeDefined()
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isGameOver = result.phase === 'idle'
-        expect(isHumanTurn || isGameOver).toBe(true)
+        expectHumanTurnOrGameOver(result)
       })
     })
 
@@ -440,9 +443,7 @@ describe('gameFlow', () => {
         const state = setupNewGame(fixedRandom)
         const readyState = advanceUntilHumanTurn(state, fixedRandom)
         const expectedTotal = INITIAL_CHIPS * PLAYER_COUNT
-        const initialTotal =
-          readyState.players.reduce((sum, p) => sum + p.chips, 0) +
-          readyState.pot
+        const initialTotal = calcTotalChips(readyState)
 
         // When: 人間がコールする
         const result = handlePlayerAction(
@@ -453,7 +454,7 @@ describe('gameFlow', () => {
 
         // Then: チップ合計が保存されている
         const resultTotal =
-          result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot
+          calcTotalChips(result)
         expect(initialTotal).toBe(expectedTotal)
         expect(resultTotal).toBe(expectedTotal)
       })
@@ -504,6 +505,7 @@ describe('gameFlow', () => {
           result.phase !== 'flop' ||
           result.players.filter((p) => !p.folded).length <= 1
         expect(isHumanTurn || isHandProgressed).toBe(true)
+
       })
     })
   })
@@ -555,13 +557,7 @@ describe('gameFlow', () => {
         const result = advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: 人間の番になっているか、ハンドが終了している
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isHandOver =
-          result.phase === 'showdown' ||
-          result.phase === 'idle' ||
-          result.players.filter((p) => !p.folded).length <= 1
-        expect(isHumanTurn || isHandOver).toBe(true)
+        expectHumanTurnOrHandOver(result)
       })
     })
 
@@ -596,20 +592,17 @@ describe('gameFlow', () => {
           ],
         })
         const initialTotal =
-          state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
+          calcTotalChips(state)
 
         // When: advanceUntilHumanTurnを呼ぶ
         const result = advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ショーダウンが処理され、チップ保存則が守られている
         const resultTotal =
-          result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot
+          calcTotalChips(result)
         expect(resultTotal).toBe(initialTotal)
         // 人間の番に戻っているか、ゲーム終了している
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isGameOver = result.phase === 'idle'
-        expect(isHumanTurn || isGameOver).toBe(true)
+        expectHumanTurnOrGameOver(result)
       })
     })
 
@@ -797,13 +790,7 @@ describe('gameFlow', () => {
         const result = advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: 人間の番になっているか、ハンドが終了している
-        const humanIndex = result.players.findIndex((p) => p.isHuman)
-        const isHumanTurn = result.currentPlayerIndex === humanIndex
-        const isHandOver =
-          result.phase === 'showdown' ||
-          result.phase === 'idle' ||
-          result.players.filter((p) => !p.folded).length <= 1
-        expect(isHumanTurn || isHandOver).toBe(true)
+        expectHumanTurnOrHandOver(result)
       })
     })
   })
@@ -844,7 +831,7 @@ describe('gameFlow', () => {
 
       // Then: チップ合計が保存されている
       const totalChips =
-        current.players.reduce((sum, p) => sum + p.chips, 0) + current.pot
+        calcTotalChips(current)
       expect(totalChips).toBe(expectedTotal)
     })
 

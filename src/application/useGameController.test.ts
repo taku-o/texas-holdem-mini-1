@@ -2,8 +2,28 @@ import { renderHook, act } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { useGameController } from './useGameController'
 import { INITIAL_CHIPS, PLAYER_COUNT } from '../domain/constants'
+import { calcTotalChips } from '../domain/testHelpers'
 
 const fixedRandom = () => 0.5
+
+function waitForGameEnd(
+  result: { current: ReturnType<typeof useGameController> },
+  action: { type: 'fold' } | { type: 'call' },
+  maxIterations = 500,
+): void {
+  let iterations = 0
+  while (result.current.gameState?.phase !== 'idle' && iterations < maxIterations) {
+    act(() => {
+      result.current.handleAction(action)
+    })
+    iterations++
+  }
+  if (iterations >= maxIterations) {
+    throw new Error(
+      `waitForGameEnd did not reach idle phase within ${maxIterations} iterations`,
+    )
+  }
+}
 
 describe('useGameController', () => {
   describe('初期状態', () => {
@@ -93,9 +113,7 @@ describe('useGameController', () => {
 
       // Then: チップ合計が初期値×人数と一致する
       const state = result.current.gameState!
-      const totalChips =
-        state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
-      expect(totalChips).toBe(INITIAL_CHIPS * PLAYER_COUNT)
+      expect(calcTotalChips(state)).toBe(INITIAL_CHIPS * PLAYER_COUNT)
     })
 
     test('should set isHumanTurn to true when human turn is reached', () => {
@@ -163,9 +181,7 @@ describe('useGameController', () => {
 
       // Then: チップ合計が保存されている
       const state = result.current.gameState!
-      const totalChips =
-        state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
-      expect(totalChips).toBe(INITIAL_CHIPS * PLAYER_COUNT)
+      expect(calcTotalChips(state)).toBe(INITIAL_CHIPS * PLAYER_COUNT)
     })
 
     test('should advance through CPU turns after human action', () => {
@@ -276,17 +292,7 @@ describe('useGameController', () => {
       })
 
       // When: 人間がフォールドを繰り返してゲーム終了に到達する
-      let iterations = 0
-      const maxIterations = 500
-      while (
-        result.current.gameState?.phase !== 'idle' &&
-        iterations < maxIterations
-      ) {
-        act(() => {
-          result.current.handleAction({ type: 'fold' })
-        })
-        iterations++
-      }
+      waitForGameEnd(result, { type: 'fold' })
 
       // Then: ゲーム終了で isHumanTurn が false
       expect(result.current.gameState!.phase).toBe('idle')
@@ -303,17 +309,7 @@ describe('useGameController', () => {
       })
 
       // When: 人間がフォールドを繰り返す
-      let iterations = 0
-      const maxIterations = 500
-      while (
-        result.current.gameState?.phase !== 'idle' &&
-        iterations < maxIterations
-      ) {
-        act(() => {
-          result.current.handleAction({ type: 'fold' })
-        })
-        iterations++
-      }
+      waitForGameEnd(result, { type: 'fold' })
 
       // Then: ゲーム終了状態になる
       expect(result.current.gameState!.phase).toBe('idle')
@@ -327,17 +323,7 @@ describe('useGameController', () => {
         result.current.startGame()
       })
 
-      let iterations = 0
-      const maxIterations = 500
-      while (
-        result.current.gameState?.phase !== 'idle' &&
-        iterations < maxIterations
-      ) {
-        act(() => {
-          result.current.handleAction({ type: 'fold' })
-        })
-        iterations++
-      }
+      waitForGameEnd(result, { type: 'fold' })
 
       // When/Then: ゲーム終了時の validActions が空
       expect(result.current.validActions).toEqual([])
@@ -396,6 +382,49 @@ describe('useGameController', () => {
     })
   })
 
+  describe('ゲーム再開', () => {
+    test('should start a fresh game after game over by calling startGame again', () => {
+      // Given: ゲーム終了状態に到達する
+      const { result } = renderHook(() => useGameController(fixedRandom))
+      act(() => {
+        result.current.startGame()
+      })
+
+      waitForGameEnd(result, { type: 'fold' })
+      expect(result.current.gameState!.phase).toBe('idle')
+
+      // When: ゲームを再開する
+      act(() => {
+        result.current.startGame()
+      })
+
+      // Then: 新しいゲームが開始されている
+      const state = result.current.gameState!
+      expect(state.phase).not.toBe('idle')
+      expect(state.players).toHaveLength(PLAYER_COUNT)
+      expect(calcTotalChips(state)).toBe(INITIAL_CHIPS * PLAYER_COUNT)
+    })
+
+    test('should reset gameOverReason after restarting', () => {
+      // Given: ゲーム終了状態に到達する
+      const { result } = renderHook(() => useGameController(fixedRandom))
+      act(() => {
+        result.current.startGame()
+      })
+
+      waitForGameEnd(result, { type: 'fold' })
+      expect(result.current.gameState!.gameOverReason).toBeDefined()
+
+      // When: ゲームを再開する
+      act(() => {
+        result.current.startGame()
+      })
+
+      // Then: gameOverReasonがundefinedである
+      expect(result.current.gameState!.gameOverReason).toBeUndefined()
+    })
+  })
+
   describe('連続ハンド', () => {
     test('should start new hand after hand completion', () => {
       // Given: ゲーム開始済み
@@ -415,6 +444,58 @@ describe('useGameController', () => {
         expect(result.current.isHumanTurn).toBe(true)
         expect(result.current.validActions.length).toBeGreaterThan(0)
       }
+    })
+
+    test('should complete multiple hands with mixed actions preserving chip conservation', () => {
+      // Given: ゲーム開始済み
+      const { result } = renderHook(() => useGameController(fixedRandom))
+      act(() => {
+        result.current.startGame()
+      })
+
+      // When: 3ハンドにわたりcall, call, foldの混合アクションを実行する
+      const actions: Array<{ type: 'call' | 'fold' }> = [
+        { type: 'call' },
+        { type: 'call' },
+        { type: 'fold' },
+      ]
+
+      for (const action of actions) {
+        if (result.current.gameState?.phase === 'idle') break
+        act(() => {
+          result.current.handleAction(action)
+        })
+
+        const stateAfter = result.current.gameState!
+
+        // Then: 各ハンド間でチップ保存則が成り立つ
+        expect(calcTotalChips(stateAfter)).toBe(INITIAL_CHIPS * PLAYER_COUNT)
+
+        // Then: 人間のターンに戻っているかゲーム終了
+        if (stateAfter.phase !== 'idle') {
+          expect(result.current.isHumanTurn).toBe(true)
+          expect(result.current.validActions.length).toBeGreaterThan(0)
+        }
+      }
+    })
+  })
+
+  describe('CPU全員脱落によるゲーム終了', () => {
+    test('should end game when all CPU players are eliminated', () => {
+      // Given: ゲーム開始済み、人間がコールを繰り返す
+      const { result } = renderHook(() => useGameController(fixedRandom))
+      act(() => {
+        result.current.startGame()
+      })
+
+      // When: 人間がcallを繰り返してゲーム終了まで進行する
+      waitForGameEnd(result, { type: 'call' })
+
+      // Then: ゲームが終了している
+      expect(result.current.gameState!.phase).toBe('idle')
+      expect(result.current.gameState!.gameOverReason).toBeDefined()
+      expect(result.current.isHumanTurn).toBe(false)
+      expect(result.current.validActions).toEqual([])
     })
   })
 })

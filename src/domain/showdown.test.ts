@@ -5,7 +5,7 @@ import {
   resolveUncontestedPot,
 } from './showdown'
 import type { Card, GameState, Player } from './types'
-import { card, createTestPlayer as createBaseTestPlayer, createTestState as createBaseTestState } from './testHelpers'
+import { calcTotalChips, card, createTestPlayer as createBaseTestPlayer, createTestState as createBaseTestState } from './testHelpers'
 
 function createTestPlayer(overrides: Partial<Player> = {}) {
   return createBaseTestPlayer({
@@ -163,7 +163,7 @@ describe('showdown', () => {
       const result = evaluateShowdown(state)
 
       // Then: 勝者にポット全額が加算される
-      const totalChips = result.players.reduce((sum, p) => sum + p.chips, 0)
+      const totalChips = calcTotalChips(result)
       expect(totalChips).toBe(900 * 3 + 300)
     })
 
@@ -205,6 +205,101 @@ describe('showdown', () => {
       // Then: 元の状態は変更されていない
       expect(state.pot).toBe(originalPot)
       expect(state.players.map((p) => p.chips)).toEqual(originalChips)
+    })
+  })
+
+  describe('evaluateShowdown エッジケース', () => {
+    test('should split pot among 3 tied players with remainder to first winner', () => {
+      // Given: 3人がコミュニティカードだけで同じハンド（ロイヤルフラッシュ）、ポットが100（3で割り切れない）
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 900 }),
+        createTestPlayer({ id: 'player-1', chips: 900 }),
+        createTestPlayer({ id: 'player-2', chips: 900 }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 100,
+        communityCards: [
+          card('A', 'spades'),
+          card('K', 'spades'),
+          card('Q', 'spades'),
+          card('J', 'spades'),
+          card('10', 'spades'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: 各プレイヤーに33ずつ配分され、端数1が最初の勝者に加算される
+      expect(result.players[0].chips).toBe(900 + 34) // 33 + remainder 1
+      expect(result.players[1].chips).toBe(900 + 33)
+      expect(result.players[2].chips).toBe(900 + 33)
+      expect(result.pot).toBe(0)
+      // チップ保存則
+      const totalChips = calcTotalChips(result)
+      expect(totalChips).toBe(900 * 3 + 100)
+    })
+
+    test('should handle odd pot with 2 tied players giving remainder to first', () => {
+      // Given: 2人が同じハンド、ポットが奇数（101）
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 900 }),
+        createTestPlayer({ id: 'player-1', chips: 900 }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 101,
+        communityCards: [
+          card('A', 'spades'),
+          card('K', 'spades'),
+          card('Q', 'spades'),
+          card('J', 'spades'),
+          card('10', 'spades'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: 50ずつ + 端数1が最初の勝者に加算される
+      expect(result.players[0].chips).toBe(900 + 51) // 50 + remainder 1
+      expect(result.players[1].chips).toBe(900 + 50)
+      expect(result.pot).toBe(0)
+    })
+
+    test('should split pot among 4 tied players with remainder to first winner', () => {
+      // Given: 4人が同じハンド、ポット103（4で割ると余り3）
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 800 }),
+        createTestPlayer({ id: 'player-1', chips: 800 }),
+        createTestPlayer({ id: 'player-2', chips: 800 }),
+        createTestPlayer({ id: 'player-3', chips: 800 }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 103,
+        communityCards: [
+          card('A', 'spades'),
+          card('K', 'spades'),
+          card('Q', 'spades'),
+          card('J', 'spades'),
+          card('10', 'spades'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: 各25 + 端数3が最初の勝者に加算される
+      expect(result.players[0].chips).toBe(800 + 25 + 3) // share + remainder
+      expect(result.players[1].chips).toBe(800 + 25)
+      expect(result.players[2].chips).toBe(800 + 25)
+      expect(result.players[3].chips).toBe(800 + 25)
+      expect(result.pot).toBe(0)
+      // チップ保存則
+      const totalChips = calcTotalChips(result)
+      expect(totalChips).toBe(800 * 4 + 103)
     })
   })
 

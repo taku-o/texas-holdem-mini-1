@@ -156,6 +156,73 @@ takt --task "/kiro:spec-impl texas-holdem-webapp 9"
 
 /kiro-complete-tasks texas-holdem-webapp 9
 
+takt --task "/kiro:spec-impl texas-holdem-webapp 10"
+
+/simplify
+
+
+takt
+次のレビューの指摘事項に対応してください。
+  1. debug_game.ts / debug_game2.ts / debug_game3.ts — 重複が多い（高）
+  3つのデバッグスクリプトはほぼ同じ構造（ゲームセットアップ、アクションループ、ガードカウンター）を持ち、わずかな違い（乱数関数、アクション
+  選択ロジック）だけが異なります。
+
+  2. gameEngine.integration.test.ts — facadeエクスポートテストの重複（中）
+  expectedExports配列が2つのテストで同一内容で定義されています（配列とSetの違いのみ）。
+
+  3. gameEngine.integration.test.ts — ベッティングラウンドループのコピペ（中）
+  preserve chip conservation across each phaseテストでは、同じベッティングラウンド処理がフロップ・ターン・リバーで3回コピペされています。
+
+  4. useGameController.test.ts — ゲーム終了待ちループの重複（中）
+  while (result.current.gameState?.phase !== 'idle' && iterations < maxIterations) パターンが3箇所でほぼ同一です。
+
+  5. チップ保存則チェックの繰り返し（低）
+  current.players.reduce((sum, p) => sum + p.chips, 0) + current.pot が15箇所以上で繰り返されています。
+
+/simplify
+
+
+takt
+次のレビューの指摘事項に対応してください。
+
+  - debug_common.test.tsの2箇所でインラインのstate.players.reduce((sum, p) => sum + p.chips, 0) +
+  state.potパターンをcalcTotalChipsヘルパーに置き換えたい（整合性のため）
+
+/simplify
+
+次のレビューの指摘事項に対応してください。
+
+  1. waitForGameEnd のサイレント終了 (中) — src/application/useGameController.test.ts
+  maxIterations に到達した場合、テストがサイレントにパスしてしまいます。エラーをスローすべきです。
+
+  2. debug_game3.ts のロガー内での冗長な getValidActions() 呼び出し (低)
+  executeBettingRound 内で既に getValidActions が呼ばれており、ロガーでの再呼び出しは不要な重複計算です。
+
+/simplify
+
+
+これらについて、
+* どのような問題があるか。
+* どのように修正したいか。
+を出力して。
+
+  残る修正対象はすべてテストファイルです：
+  1. debug_common.test.ts - 3箇所のインラインチップ計算をcalcTotalChipsに置き換え
+  2. gameEngine.integration.test.ts - ベッティングラウンドループ5箇所の重複をexecuteBettingRoundで統一
+  3. gameFlow.test.ts - 「人間ターンまたはゲームオーバー」アサーションパターン8箇所の重複をヘルパーに抽出
+
+
+テストファイルの修正をお願いします。
+
+
+/simplify
+
+/kiro-complete-tasks texas-holdem-webapp 10
+
+
+
+
+
 
 
 

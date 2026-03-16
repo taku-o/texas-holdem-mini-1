@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { setupNewGame } from './gameSetup'
 import { PLAYER_COUNT, INITIAL_CHIPS, BIG_BLIND } from './constants'
+import { calcTotalChips } from './testHelpers'
 
 describe('gameSetup', () => {
   describe('setupNewGame', () => {
@@ -47,9 +48,7 @@ describe('gameSetup', () => {
       const state = setupNewGame(randomFn)
 
       // Then: ブラインドポスト後、合計チップは初期値×人数と一致する
-      const totalChips =
-        state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot
-      expect(totalChips).toBe(INITIAL_CHIPS * PLAYER_COUNT)
+      expect(calcTotalChips(state)).toBe(INITIAL_CHIPS * PLAYER_COUNT)
     })
 
     test('should deal 2 hole cards to each player', () => {

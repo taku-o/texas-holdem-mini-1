@@ -705,6 +705,112 @@ describe('decideAction', () => {
     })
   })
 
+  describe('bet/raiseアクションのamount有効範囲', () => {
+    test('should return bet amount within valid range from getValidActions', () => {
+      // Given: ベット可能な状態でstrong handを持つCPU
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'flop',
+        players,
+        communityCards: [
+          card('A', 'diamonds'),
+          card('5', 'clubs'),
+          card('9', 'hearts'),
+        ],
+        currentBet: 0,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: bet時はamountがBIG_BLIND以上かつプレイヤーチップ以下
+      if (action.type === 'bet') {
+        expect(action.amount).toBeGreaterThanOrEqual(BIG_BLIND)
+        expect(action.amount!).toBeLessThanOrEqual(state.players[1].chips)
+      }
+    })
+
+    test('should return raise amount greater than current bet and within player chips', () => {
+      // Given: レイズ可能な状態でstrong handを持つCPU
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'preflop',
+        players,
+        currentBet: BIG_BLIND,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する（low乱数＝積極的）
+      const action = decideAction(state, 1, alwaysLow)
+
+      // Then: raise時はamountがcurrentBetより大きくプレイヤーチップ以下
+      if (action.type === 'raise') {
+        expect(action.amount!).toBeGreaterThan(state.currentBet)
+        expect(action.amount!).toBeLessThanOrEqual(
+          state.players[1].chips + state.players[1].currentBetInRound,
+        )
+      }
+    })
+
+    test('should clamp bet amount to player chips when chips are limited', () => {
+      // Given: 少ないチップのCPU（BIG_BLIND * 3 = 30）でstrong hand
+      const limitedChips = BIG_BLIND * 3
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 1 ? limitedChips : 1000,
+          holeCards:
+            i === 1
+              ? [card('A', 'spades'), card('A', 'hearts')]
+              : [card('2', 'clubs'), card('3', 'diamonds')],
+          currentBetInRound: 0,
+        }),
+      )
+      const state = createTestState({
+        phase: 'flop',
+        players,
+        communityCards: [
+          card('A', 'diamonds'),
+          card('5', 'clubs'),
+          card('9', 'hearts'),
+        ],
+        currentBet: 0,
+        currentPlayerIndex: 1,
+      })
+
+      // When: CPUが行動を決定する
+      const action = decideAction(state, 1, alwaysMid)
+
+      // Then: bet/raise額がプレイヤーのチップを超えない
+      if (action.type === 'bet' || action.type === 'raise') {
+        expect(action.amount!).toBeLessThanOrEqual(limitedChips)
+        expect(action.amount!).toBeGreaterThanOrEqual(BIG_BLIND)
+      }
+    })
+  })
+
   describe('境界値・エッジケース', () => {
     test('should handle player with exactly BIG_BLIND chips', () => {
       // Given: ちょうどBIG_BLIND分のチップしかないCPU

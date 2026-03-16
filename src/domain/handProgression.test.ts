@@ -299,6 +299,48 @@ describe('handProgression', () => {
       // Then: 元の状態は変更されていない
       expect(state.dealerIndex).toBe(originalDealerIndex)
     })
+
+    test('should skip chip-0 player in blind positions', () => {
+      // Given: ディーラーがindex 2で、SB位置（index 4）のプレイヤーのチップが0
+      // getNextDealerIndex: 2→3(chips=1000)→dealer=3, SB=(3+1)%5=4, BB=(3+2)%5=0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 4 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ players, dealerIndex: 2 })
+
+      // When: 次のハンドを開始する
+      const result = startNextHand(state, () => 0.5)
+
+      // Then: ディーラーがindex 3に移動し、SB(index 4)のチップ0プレイヤーにブラインドが課されない
+      expect(result.dealerIndex).toBe(3)
+      expect(result.players[4].chips).toBe(0)
+      expect(result.players[4].currentBetInRound).toBe(0)
+      // BB(index 0)には正常にブラインドが課される
+      expect(result.players[0].chips).toBe(1000 - BIG_BLIND)
+      expect(result.players[0].currentBetInRound).toBe(BIG_BLIND)
+    })
+
+    test('should correctly assign dealer when consecutive players have 0 chips', () => {
+      // Given: index 1, 2, 3 のチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: (i >= 1 && i <= 3) ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ players, dealerIndex: 0 })
+
+      // When: 次のハンドを開始する
+      const result = startNextHand(state, () => 0.5)
+
+      // Then: ディーラーがindex 4（次のチップ>0のプレイヤー）に移動する
+      expect(result.dealerIndex).toBe(4)
+    })
   })
 
   describe('isGameOver', () => {
@@ -384,6 +426,24 @@ describe('handProgression', () => {
       // Then: 理由が含まれる
       expect(result.reason).toBeDefined()
       expect(typeof result.reason).toBe('string')
+    })
+  })
+
+  describe('advancePhase エラーケース', () => {
+    test('should throw error when advancing from idle phase', () => {
+      // Given: idle状態のゲーム
+      const state = createTestState({ phase: 'idle' })
+
+      // When/Then: advancePhaseを呼ぶとエラーがスローされる
+      expect(() => advancePhase(state)).toThrow('Cannot advance from phase: idle')
+    })
+
+    test('should throw error when advancing from showdown phase', () => {
+      // Given: showdown状態のゲーム
+      const state = createTestState({ phase: 'showdown' })
+
+      // When/Then: advancePhaseを呼ぶとエラーがスローされる
+      expect(() => advancePhase(state)).toThrow('Cannot advance from phase: showdown')
     })
   })
 
