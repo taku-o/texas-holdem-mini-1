@@ -29,14 +29,10 @@ export function useGameController(randomFn: () => number): GameController {
           setGameState,
         )
         gameStateRef.current = advanced
-        setGameState(advanced)
+        setGameState(() => advanced)
       } catch (e) {
         console.error(e)
-        try {
-          setGameState(null)
-        } catch {
-          // React environment may already be torn down
-        }
+        setGameState(() => null)
         gameStateRef.current = null
       } finally {
         processingRef.current = false
@@ -60,7 +56,7 @@ export function useGameController(randomFn: () => number): GameController {
             setGameState,
           )
           gameStateRef.current = result
-          setGameState(result)
+          setGameState(() => result)
         } catch (e) {
           console.error(e)
         } finally {

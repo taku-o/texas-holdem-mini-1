@@ -56,8 +56,8 @@
   - 呼び出し側（useGameController）とのインターフェース（同期で 1 回分返すか、Promise で複数回 setState するか）に合わせて実装する
   - _Requirements: 10_
 
-- [ ] 9. ゲーム開始時の setState を関数形式に統一する
-- [ ] 9.1 (P) startGame で初期状態を設定する際、前回状態に依存しない形で setState する（例: setState(() => newState)）
+- [x] 9. ゲーム開始時の setState を関数形式に統一する
+- [x] 9.1 (P) startGame で初期状態を設定する際、前回状態に依存しない形で setState する（例: setState(() => newState)）
   - _Requirements: 14_
 
 - [ ] 10. リスト表示の key を安定した識別子にする
