@@ -25,6 +25,9 @@ export function determineWinners(
   return winners
 }
 
+// Why: 本バージョンではサイドポットを実装せず、単一ポットで均等配分する。
+// 端数（remainder）は最初の勝者に加算する。
+// 不変条件: 配分後、全プレイヤーの chips >= 0 かつ配分合計 = pot。
 export function evaluateShowdown(state: GameState): GameState {
   const winners = determineWinners(state.players, state.communityCards)
   const share = Math.floor(state.pot / winners.length)
@@ -33,17 +36,21 @@ export function evaluateShowdown(state: GameState): GameState {
   const players = state.players.map((p, i) => {
     if (!winners.includes(i)) return { ...p }
     const extra = i === winners[0] ? remainder : 0
-    return { ...p, chips: p.chips + share + extra }
+    const newChips = p.chips + share + extra
+    return { ...p, chips: newChips }
   })
 
   return { ...state, players, pot: 0 }
 }
 
+// Why: 全員フォールドで1人残った場合の単一ポット配分。
+// 不変条件: 配分後、全プレイヤーの chips >= 0。
 export function resolveUncontestedPot(state: GameState): GameState {
   const winnerIndex = state.players.findIndex((p) => !p.folded)
   const players = state.players.map((p, i) => {
     if (i !== winnerIndex) return { ...p }
-    return { ...p, chips: p.chips + state.pot }
+    const newChips = p.chips + state.pot
+    return { ...p, chips: newChips }
   })
   return { ...state, players, pot: 0 }
 }

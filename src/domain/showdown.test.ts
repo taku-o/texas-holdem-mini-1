@@ -303,6 +303,107 @@ describe('showdown', () => {
     })
   })
 
+  describe('evaluateShowdown ポット配分の正当性', () => {
+    test('should keep all players chips non-negative when all-in players with different chip amounts win', () => {
+      // Given: 異なるchips額でオールインした複数プレイヤー（chips=0）がショーダウンに到達
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 0 }), // オールインで残り0
+        createTestPlayer({ id: 'player-1', chips: 0 }), // オールインで残り0
+        createTestPlayer({ id: 'player-2', chips: 500, folded: true }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 1500,
+        communityCards: [
+          card('A', 'spades'),
+          card('K', 'spades'),
+          card('Q', 'spades'),
+          card('J', 'spades'),
+          card('10', 'spades'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: 全プレイヤーのchipsが0以上
+      for (const p of result.players) {
+        expect(p.chips).toBeGreaterThanOrEqual(0)
+      }
+      // チップ保存則
+      const totalChips = calcTotalChips(result)
+      expect(totalChips).toBe(0 + 0 + 500 + 1500)
+    })
+
+    test('should correctly distribute pot to a winner with chips=0', () => {
+      // Given: オールインしてchips=0のプレイヤーが最強ハンドで勝利
+      const players: Player[] = [
+        createTestPlayer({
+          id: 'player-0',
+          chips: 0,
+          holeCards: [card('A', 'diamonds'), card('K', 'diamonds')],
+        }),
+        createTestPlayer({
+          id: 'player-1',
+          chips: 800,
+          holeCards: [card('2', 'clubs'), card('3', 'clubs')],
+        }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 200,
+        communityCards: [
+          card('Q', 'diamonds'),
+          card('J', 'diamonds'),
+          card('10', 'diamonds'),
+          card('4', 'spades'),
+          card('5', 'hearts'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: chips=0の勝者にpot全額が加算される
+      expect(result.players[0].chips).toBe(200)
+      expect(result.players[1].chips).toBe(800)
+      expect(result.pot).toBe(0)
+      // チップ保存則
+      const totalChips = calcTotalChips(result)
+      expect(totalChips).toBe(0 + 800 + 200)
+    })
+
+    test('should handle pot=0 without error', () => {
+      // Given: ポットが0の状態でショーダウンに到達
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 1000 }),
+        createTestPlayer({ id: 'player-1', chips: 1000 }),
+      ]
+      const state = createTestState({
+        players,
+        pot: 0,
+        communityCards: [
+          card('A', 'spades'),
+          card('K', 'spades'),
+          card('Q', 'spades'),
+          card('J', 'spades'),
+          card('10', 'spades'),
+        ],
+      })
+
+      // When: ショーダウンを評価する
+      const result = evaluateShowdown(state)
+
+      // Then: エラーなく処理され、chipsは変わらず、potは0
+      expect(result.players[0].chips).toBe(1000)
+      expect(result.players[1].chips).toBe(1000)
+      expect(result.pot).toBe(0)
+      for (const p of result.players) {
+        expect(p.chips).toBeGreaterThanOrEqual(0)
+      }
+    })
+  })
+
   describe('resolveUncontestedPot', () => {
     test('should award pot to last remaining player when all others folded', () => {
       // Given: 1人以外全員フォールド
@@ -339,6 +440,53 @@ describe('showdown', () => {
 
       // Then: 元の状態は変更されていない
       expect(state.pot).toBe(originalPot)
+    })
+  })
+
+  describe('resolveUncontestedPot ポット配分の正当性', () => {
+    test('should keep winner chips non-negative when winner had chips=0', () => {
+      // Given: オールインしてchips=0の勝者（他全員フォールド）
+      const players: Player[] = [
+        createTestPlayer({ id: 'player-0', chips: 0, folded: true }),
+        createTestPlayer({ id: 'player-1', chips: 0 }),
+        createTestPlayer({ id: 'player-2', chips: 500, folded: true }),
+      ]
+      const state = createTestState({ players, pot: 300 })
+
+      // When: 無争のポットを解決する
+      const result = resolveUncontestedPot(state)
+
+      // Then: chips=0の勝者にpotが加算され、全プレイヤーのchipsが0以上
+      expect(result.players[1].chips).toBe(300)
+      expect(result.pot).toBe(0)
+      for (const p of result.players) {
+        expect(p.chips).toBeGreaterThanOrEqual(0)
+      }
+      // チップ保存則
+      const totalChips = calcTotalChips(result)
+      expect(totalChips).toBe(0 + 0 + 500 + 300)
+    })
+
+    test('should handle pot=0 without error', () => {
+      // Given: ポットが0の状態
+      const players = Array.from({ length: 3 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: 1000,
+          folded: i !== 0,
+        })
+      )
+      const state = createTestState({ players, pot: 0 })
+
+      // When: 無争のポットを解決する
+      const result = resolveUncontestedPot(state)
+
+      // Then: エラーなく処理され、chipsは変わらず
+      expect(result.players[0].chips).toBe(1000)
+      expect(result.pot).toBe(0)
+      for (const p of result.players) {
+        expect(p.chips).toBeGreaterThanOrEqual(0)
+      }
     })
   })
 })
