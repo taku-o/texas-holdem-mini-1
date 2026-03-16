@@ -1,4 +1,8 @@
-import { evaluateStrings, rankBoard } from '@pokertools/evaluator'
+import {
+  evaluateStrings,
+  rankBoard,
+  rankDescription,
+} from '@pokertools/evaluator'
 import type { Card, HandRank, HandRankCategory } from './types'
 
 const RANK_TO_LIB: Record<Card['rank'], string> = {
@@ -24,16 +28,16 @@ const SUIT_TO_LIB: Record<Card['suit'], string> = {
   clubs: 'c',
 }
 
-const LIB_RANK_TO_CATEGORY: Record<number, HandRankCategory> = {
-  0: 'straight-flush',
-  1: 'four-of-a-kind',
-  2: 'full-house',
-  3: 'flush',
-  4: 'straight',
-  5: 'three-of-a-kind',
-  6: 'two-pair',
-  7: 'one-pair',
-  8: 'high-card',
+const DESCRIPTION_TO_CATEGORY: Record<string, HandRankCategory> = {
+  'Straight Flush': 'straight-flush',
+  'Four of a Kind': 'four-of-a-kind',
+  'Full House': 'full-house',
+  Flush: 'flush',
+  Straight: 'straight',
+  'Three of a Kind': 'three-of-a-kind',
+  'Two Pair': 'two-pair',
+  'One Pair': 'one-pair',
+  'High Card': 'high-card',
 }
 
 const ROYAL_FLUSH_SCORE = 1
@@ -46,12 +50,18 @@ export function evaluate(cards: Card[]): HandRank {
   const libCards = cards.map(toLibCardString)
   const score = evaluateStrings(libCards)
   const boardStr = libCards.join(' ')
-  const libRank = rankBoard(boardStr) as number
+  const libRank = rankBoard(boardStr)
+  const description = rankDescription(libRank)
+  const baseCategory = DESCRIPTION_TO_CATEGORY[description]
+  if (!baseCategory) {
+    throw new Error(`Unknown hand rank description: ${description}`)
+  }
 
-  const isRoyalFlush = libRank === 0 && score === ROYAL_FLUSH_SCORE
+  const isRoyalFlush =
+    baseCategory === 'straight-flush' && score === ROYAL_FLUSH_SCORE
   const category: HandRankCategory = isRoyalFlush
     ? 'royal-flush'
-    : LIB_RANK_TO_CATEGORY[libRank]
+    : baseCategory
 
   return { category, score }
 }

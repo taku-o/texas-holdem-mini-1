@@ -227,6 +227,44 @@ describe('handEvaluator', () => {
         expect(royalFlush.category).toBe('royal-flush')
         expect(straightFlush.category).toBe('straight-flush')
       })
+
+      test('should not treat ace-low straight flush as royal flush', () => {
+        // Given: エースロー（ホイール）のストレートフラッシュ（A-2-3-4-5 同一スート）
+        const cards: Card[] = [
+          card('A', 'hearts'),
+          card('2', 'hearts'),
+          card('3', 'hearts'),
+          card('4', 'hearts'),
+          card('5', 'hearts'),
+          card('9', 'clubs'),
+          card('J', 'diamonds'),
+        ]
+
+        // When: ハンドを評価する
+        const result = evaluate(cards)
+
+        // Then: ストレートフラッシュであり、ロイヤルフラッシュではない
+        expect(result.category).toBe('straight-flush')
+      })
+
+      test('should detect royal flush regardless of suit', () => {
+        // Given: ハートのロイヤルフラッシュ（スペード以外でも動作確認）
+        const cards: Card[] = [
+          card('A', 'hearts'),
+          card('K', 'hearts'),
+          card('Q', 'hearts'),
+          card('J', 'hearts'),
+          card('10', 'hearts'),
+          card('2', 'clubs'),
+          card('3', 'diamonds'),
+        ]
+
+        // When: ハンドを評価する
+        const result = evaluate(cards)
+
+        // Then: ロイヤルフラッシュと判定される
+        expect(result.category).toBe('royal-flush')
+      })
     })
 
     describe('スコアによる同一役の比較', () => {
