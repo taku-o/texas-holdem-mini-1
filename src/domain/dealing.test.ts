@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { postBlinds, dealHoleCards, dealCommunityCards } from './dealing'
+import { findNextEligibleIndex, postBlinds, dealHoleCards, dealCommunityCards } from './dealing'
 import { SMALL_BLIND, BIG_BLIND } from './constants'
 import type { GameState, Player } from './types'
 import { card, createTestPlayer as createBaseTestPlayer, createTestState as createBaseTestState } from './testHelpers'
@@ -54,14 +54,14 @@ describe('dealing', () => {
       expect(result.pot).toBe(SMALL_BLIND + BIG_BLIND)
     })
 
-    test('should set currentBet to BIG_BLIND', () => {
-      // Given: currentBetが0の状態
+    test('should set currentBet to actual BB amount when BB has enough chips', () => {
+      // Given: 全プレイヤーが十分なチップを持つ状態
       const state = createTestState({ currentBet: 0 })
 
       // When: ブラインドをポストする
       const result = postBlinds(state)
 
-      // Then: currentBetがBIG_BLINDに設定される
+      // Then: currentBetがBIG_BLIND（実際のBB額）に設定される
       expect(result.currentBet).toBe(BIG_BLIND)
     })
 
@@ -111,6 +111,130 @@ describe('dealing', () => {
       // Then: プレイヤーは持っているチップ全額をオールインする
       expect(result.players[2].chips).toBe(0)
       expect(result.players[2].currentBetInRound).toBe(7)
+      // currentBetは実際にポストしたBB額になる
+      expect(result.currentBet).toBe(7)
+    })
+
+    test('should set currentBet to actual BB amount when BB is short-stacked', () => {
+      // Given: BB位置のプレイヤーがBBの半額しかチップを持たない
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 2 ? 4 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: currentBetが実際のBB額（4）になる
+      expect(result.currentBet).toBe(4)
+    })
+
+    test('should not affect currentBet when only SB is short-stacked', () => {
+      // Given: SB位置のプレイヤーがSB未満のチップを持ち、BBは十分なチップがある
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 1 ? 2 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: currentBetはBIG_BLIND（BB額）で決まる（SBのショートスタックは影響しない）
+      expect(result.currentBet).toBe(BIG_BLIND)
+    })
+
+    test('should skip chips-0 player at SB position', () => {
+      // Given: dealer=0, index 1（通常SB位置）のチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 1 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: index 1はスキップされ、チップが変わらない
+      expect(result.players[1].chips).toBe(0)
+      expect(result.players[1].currentBetInRound).toBe(0)
+      // index 2がSBになる
+      expect(result.players[2].chips).toBe(1000 - SMALL_BLIND)
+      expect(result.players[2].currentBetInRound).toBe(SMALL_BLIND)
+      // index 3がBBになる
+      expect(result.players[3].chips).toBe(1000 - BIG_BLIND)
+      expect(result.players[3].currentBetInRound).toBe(BIG_BLIND)
+    })
+
+    test('should skip chips-0 player at BB position', () => {
+      // Given: dealer=0, index 2（通常BB位置）のチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 2 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: index 1がSBになる
+      expect(result.players[1].chips).toBe(1000 - SMALL_BLIND)
+      expect(result.players[1].currentBetInRound).toBe(SMALL_BLIND)
+      // index 2はスキップされる
+      expect(result.players[2].chips).toBe(0)
+      expect(result.players[2].currentBetInRound).toBe(0)
+      // index 3がBBになる
+      expect(result.players[3].chips).toBe(1000 - BIG_BLIND)
+      expect(result.players[3].currentBetInRound).toBe(BIG_BLIND)
+    })
+
+    test('should skip multiple consecutive chips-0 players', () => {
+      // Given: dealer=0, index 1と2のチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: (i === 1 || i === 2) ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: index 1, 2はスキップされる
+      expect(result.players[1].chips).toBe(0)
+      expect(result.players[2].chips).toBe(0)
+      // index 3がSB、index 4がBBになる
+      expect(result.players[3].chips).toBe(1000 - SMALL_BLIND)
+      expect(result.players[3].currentBetInRound).toBe(SMALL_BLIND)
+      expect(result.players[4].chips).toBe(1000 - BIG_BLIND)
+      expect(result.players[4].currentBetInRound).toBe(BIG_BLIND)
+    })
+
+    test('should set lastAggressorIndex to actual BB index after skipping', () => {
+      // Given: dealer=0, index 2（通常BB位置）のチップが0
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 2 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({ dealerIndex: 0, players })
+
+      // When: ブラインドをポストする
+      const result = postBlinds(state)
+
+      // Then: lastAggressorIndexが実際のBBプレイヤー（index 3）を指す
+      expect(result.lastAggressorIndex).toBe(3)
     })
 
     test('should not mutate original state', () => {
@@ -255,6 +379,44 @@ describe('dealing', () => {
       // Then: 元の状態は変更されていない
       expect(state.deck).toHaveLength(originalDeckLength)
       expect(state.communityCards).toHaveLength(0)
+    })
+  })
+
+  describe('findNextEligibleIndex', () => {
+    test('should find next player with chips > 0', () => {
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({ id: `player-${i}` })
+      )
+
+      expect(findNextEligibleIndex(players, 0)).toBe(1)
+      expect(findNextEligibleIndex(players, 3)).toBe(4)
+    })
+
+    test('should skip players with chips === 0', () => {
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: i === 1 ? 0 : 1000,
+        })
+      )
+
+      expect(findNextEligibleIndex(players, 0)).toBe(2)
+    })
+
+    test('should wrap around the array', () => {
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({ id: `player-${i}` })
+      )
+
+      expect(findNextEligibleIndex(players, 4)).toBe(0)
+    })
+
+    test('should return -1 when no eligible player exists', () => {
+      const players = Array.from({ length: 3 }, (_, i) =>
+        createTestPlayer({ id: `player-${i}`, chips: 0 })
+      )
+
+      expect(findNextEligibleIndex(players, 0)).toBe(-1)
     })
   })
 })

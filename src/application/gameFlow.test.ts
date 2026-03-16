@@ -718,7 +718,8 @@ describe('gameFlow', () => {
         const result = advanceUntilHumanTurn(state, fixedRandom)
 
         // Then: ショーダウンまで自動進行してポットが分配されている
-        expect(result.pot).toBe(0)
+        // ゲームオーバーか新しいハンドが開始されている
+        expect(calcTotalChips(result)).toBe(1000 + 500)
       })
     })
 
@@ -774,10 +775,10 @@ describe('gameFlow', () => {
         // When: advanceUntilHumanTurnを呼ぶ
         const result = advanceUntilHumanTurn(state, fixedRandom)
 
-        // Then: ポットが分配されている
-        expect(result.pot).toBe(0)
-        // player-1がポットを獲得している
-        expect(result.players[1].chips).toBe(900 + 200)
+        // Then: ポットが分配されている（ゲーム続行時は新ハンドのブラインドがポストされる）
+        expect(calcTotalChips(result)).toBe(900 + 900 + 200)
+        // player-1がポットを獲得している（新ハンドのブラインドで減少する可能性あり）
+        expect(result.players[1].chips).toBeGreaterThan(900)
       })
     })
 

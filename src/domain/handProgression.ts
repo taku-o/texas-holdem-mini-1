@@ -1,6 +1,11 @@
 import type { Card, GamePhase, GameState } from './types'
 import { createDeck, shuffleDeck } from './deck'
-import { dealCommunityCards, dealHoleCards, postBlinds } from './dealing'
+import {
+  dealCommunityCards,
+  dealHoleCards,
+  findNextEligibleIndex,
+  postBlinds,
+} from './dealing'
 import { getNextActivePlayerIndex } from './betting'
 
 const NEXT_PHASE: Partial<Record<GamePhase, GamePhase>> = {
@@ -20,7 +25,7 @@ export function preparePreflopRound(state: GameState): GameState {
   let nextState = postBlinds(state)
   nextState = dealHoleCards(nextState)
 
-  const bbIndex = (nextState.dealerIndex + 2) % nextState.players.length
+  const bbIndex = nextState.lastAggressorIndex!
   const utg = getNextActivePlayerIndex(nextState, bbIndex)
   return { ...nextState, currentPlayerIndex: utg }
 }
@@ -61,13 +66,8 @@ export function advancePhase(state: GameState): GameState {
 }
 
 function getNextDealerIndex(state: GameState): number {
-  const count = state.players.length
-  let index = (state.dealerIndex + 1) % count
-  while (index !== state.dealerIndex) {
-    if (state.players[index].chips > 0) return index
-    index = (index + 1) % count
-  }
-  return state.dealerIndex
+  const result = findNextEligibleIndex(state.players, state.dealerIndex)
+  return result === -1 ? state.dealerIndex : result
 }
 
 export function startNextHand(

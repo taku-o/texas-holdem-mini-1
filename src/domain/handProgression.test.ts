@@ -44,6 +44,56 @@ describe('handProgression', () => {
       }
     })
 
+    test('should set UTG based on actual BB position when chips-0 player is skipped', () => {
+      // Given: dealer=0, index 2（通常BB位置）のチップが0
+      // SB=index 1, BB=index 3（index 2をスキップ）、UTG=index 4
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 2 ? 0 : 1000,
+        })
+      )
+      const state = createTestState({
+        dealerIndex: 0,
+        pot: 0,
+        currentBet: 0,
+        lastAggressorIndex: null,
+        players,
+      })
+
+      // When: プリフロップ準備を実行する
+      const result = preparePreflopRound(state)
+
+      // Then: UTGはBBの次のアクティブプレイヤー（index 4）
+      expect(result.lastAggressorIndex).toBe(3)
+      expect(result.currentPlayerIndex).toBe(4)
+    })
+
+    test('should set currentBet to actual BB amount in preparePreflopRound', () => {
+      // Given: BB位置のプレイヤーがショートスタック
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          isHuman: i === 0,
+          chips: i === 2 ? 7 : 1000,
+        })
+      )
+      const state = createTestState({
+        dealerIndex: 0,
+        pot: 0,
+        currentBet: 0,
+        lastAggressorIndex: null,
+        players,
+      })
+
+      // When: プリフロップ準備を実行する
+      const result = preparePreflopRound(state)
+
+      // Then: currentBetが実際のBB額（7）になる
+      expect(result.currentBet).toBe(7)
+    })
+
     test('should not mutate original state', () => {
       // Given: 初期状態
       const state = createTestState({ pot: 0, currentBet: 0 })
@@ -277,7 +327,7 @@ describe('handProgression', () => {
     })
 
     test('should post blinds for new hand', () => {
-      // Given: ショーダウン後の状態
+      // Given: ショーダウン後の状態（全プレイヤーが十分なチップ）
       const state = createTestState({ phase: 'showdown', pot: 0 })
 
       // When: 次のハンドを開始する
@@ -301,8 +351,9 @@ describe('handProgression', () => {
     })
 
     test('should skip chip-0 player in blind positions', () => {
-      // Given: ディーラーがindex 2で、SB位置（index 4）のプレイヤーのチップが0
-      // getNextDealerIndex: 2→3(chips=1000)→dealer=3, SB=(3+1)%5=4, BB=(3+2)%5=0
+      // Given: ディーラーがindex 2で、index 4のプレイヤーのチップが0
+      // getNextDealerIndex: 2→3(chips=1000)→dealer=3
+      // findNextEligibleIndex: SB=4をスキップ→0, BB=1
       const players = Array.from({ length: 5 }, (_, i) =>
         createTestPlayer({
           id: `player-${i}`,
@@ -315,13 +366,16 @@ describe('handProgression', () => {
       // When: 次のハンドを開始する
       const result = startNextHand(state, () => 0.5)
 
-      // Then: ディーラーがindex 3に移動し、SB(index 4)のチップ0プレイヤーにブラインドが課されない
+      // Then: ディーラーがindex 3に移動し、index 4のチップ0プレイヤーにブラインドが課されない
       expect(result.dealerIndex).toBe(3)
       expect(result.players[4].chips).toBe(0)
       expect(result.players[4].currentBetInRound).toBe(0)
-      // BB(index 0)には正常にブラインドが課される
-      expect(result.players[0].chips).toBe(1000 - BIG_BLIND)
-      expect(result.players[0].currentBetInRound).toBe(BIG_BLIND)
+      // index 0がSBになる（index 4をスキップ）
+      expect(result.players[0].chips).toBe(1000 - SMALL_BLIND)
+      expect(result.players[0].currentBetInRound).toBe(SMALL_BLIND)
+      // index 1がBBになる
+      expect(result.players[1].chips).toBe(1000 - BIG_BLIND)
+      expect(result.players[1].currentBetInRound).toBe(BIG_BLIND)
     })
 
     test('should correctly assign dealer when consecutive players have 0 chips', () => {

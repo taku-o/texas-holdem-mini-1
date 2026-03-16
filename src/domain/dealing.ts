@@ -1,11 +1,24 @@
-import type { GameState } from './types'
+import type { GameState, Player } from './types'
 import { SMALL_BLIND, BIG_BLIND } from './constants'
+
+export function findNextEligibleIndex(
+  players: Player[],
+  fromIndex: number,
+): number {
+  const count = players.length
+  let index = (fromIndex + 1) % count
+  const start = index
+  do {
+    if (players[index].chips > 0) return index
+    index = (index + 1) % count
+  } while (index !== start)
+  return -1
+}
 
 export function postBlinds(state: GameState): GameState {
   const players = state.players.map((p) => ({ ...p }))
-  const count = players.length
-  const sbIndex = (state.dealerIndex + 1) % count
-  const bbIndex = (state.dealerIndex + 2) % count
+  const sbIndex = findNextEligibleIndex(players, state.dealerIndex)
+  const bbIndex = findNextEligibleIndex(players, sbIndex)
 
   const sbAmount = Math.min(SMALL_BLIND, players[sbIndex].chips)
   players[sbIndex].chips -= sbAmount
@@ -19,7 +32,7 @@ export function postBlinds(state: GameState): GameState {
     ...state,
     players,
     pot: state.pot + sbAmount + bbAmount,
-    currentBet: BIG_BLIND,
+    currentBet: bbAmount,
     lastAggressorIndex: bbIndex,
   }
 }
