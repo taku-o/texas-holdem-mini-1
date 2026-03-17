@@ -217,6 +217,44 @@ describe('PlayerSeat', () => {
     })
   })
 
+  describe('手札の再レンダリング', () => {
+    test('should correctly display cards after showCards changes from false to true', () => {
+      // Given: CPUプレイヤーの手札が裏面で表示されている
+      const player = createTestPlayer({
+        id: 'cpu-1',
+        isHuman: false,
+        holeCards: [card('Q', 'diamonds'), card('J', 'clubs')],
+      })
+
+      // When: showCards=falseからtrueに変更して再レンダリングする
+      const { rerender } = render(
+        <PlayerSeat
+          player={player}
+          isDealer={false}
+          isCurrentTurn={false}
+          showCards={false}
+        />
+      )
+
+      // 裏面表示中はランクが見えない
+      expect(screen.queryByText('Q')).toBeNull()
+      expect(screen.queryByText('J')).toBeNull()
+
+      rerender(
+        <PlayerSeat
+          player={player}
+          isDealer={false}
+          isCurrentTurn={false}
+          showCards={true}
+        />
+      )
+
+      // Then: カードが正しく表面で表示される
+      expect(screen.getByText('Q')).toBeTruthy()
+      expect(screen.getByText('J')).toBeTruthy()
+    })
+  })
+
   describe('手札なし', () => {
     test('should handle player with empty hole cards', () => {
       // Given: 手札が空のプレイヤー（ゲーム開始前など）

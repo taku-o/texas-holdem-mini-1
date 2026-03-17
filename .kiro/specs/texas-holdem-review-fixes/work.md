@@ -83,12 +83,17 @@ takt --task "/kiro:spec-impl texas-holdem-review-fixes 8"
 /kiro-complete-tasks texas-holdem-review-fixes 8
 
 takt --task "/kiro:spec-impl texas-holdem-review-fixes 9"
-
-
-
-
-
-
 /kiro-complete-tasks texas-holdem-review-fixes 9
+
+takt --task "/kiro:spec-impl texas-holdem-review-fixes 10"
+
+
+
+
+
+
+
+
+/kiro-complete-tasks texas-holdem-review-fixes 10
 
 

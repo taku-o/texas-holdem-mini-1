@@ -28,8 +28,8 @@ export function PlayerSeat({
         </span>
       )}
       <div className="flex gap-1 mb-1">
-        {player.holeCards.map((card, index) => (
-          <CardView key={index} card={card} faceDown={!shouldShowFaceUp} />
+        {player.holeCards.map((card) => (
+          <CardView key={`${card.suit}-${card.rank}`} card={card} faceDown={!shouldShowFaceUp} />
         ))}
       </div>
       <div className="text-sm text-center">{player.chips}</div>

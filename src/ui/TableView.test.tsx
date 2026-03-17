@@ -110,5 +110,29 @@ describe('TableView', () => {
       expect(screen.getByText('J')).toBeTruthy()
       expect(screen.getByText('10')).toBeTruthy()
     })
+
+    test('should correctly render cards after rerender with additional cards', () => {
+      // Given: フロップの3枚のコミュニティカード
+      const flopCards = [
+        card('A', 'spades'),
+        card('K', 'hearts'),
+        card('Q', 'diamonds'),
+      ]
+
+      // When: フロップでレンダリング後、ターンで4枚目を追加して再レンダリングする
+      const { rerender } = render(<TableView communityCards={flopCards} pot={100} />)
+
+      const turnCards = [
+        ...flopCards,
+        card('J', 'clubs'),
+      ]
+      rerender(<TableView communityCards={turnCards} pot={100} />)
+
+      // Then: 4枚すべてのカードが正しく表示される
+      expect(screen.getByText('A')).toBeTruthy()
+      expect(screen.getByText('K')).toBeTruthy()
+      expect(screen.getByText('Q')).toBeTruthy()
+      expect(screen.getByText('J')).toBeTruthy()
+    })
   })
 })

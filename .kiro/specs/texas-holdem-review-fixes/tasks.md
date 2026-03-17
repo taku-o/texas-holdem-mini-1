@@ -60,11 +60,11 @@
 - [x] 9.1 (P) startGame で初期状態を設定する際、前回状態に依存しない形で setState する（例: setState(() => newState)）
   - _Requirements: 14_
 
-- [ ] 10. リスト表示の key を安定した識別子にする
-- [ ] 10.1 (P) テーブル上のコミュニティカードの key に、配列 index ではなくカードの一意識別子（例: suit + rank）を使用する
+- [x] 10. リスト表示の key を安定した識別子にする
+- [x] 10.1 (P) テーブル上のコミュニティカードの key に、配列 index ではなくカードの一意識別子（例: suit + rank）を使用する
   - _Requirements: 11_
 
-- [ ] 10.2 (P) 席やカードのリストで index を key にしている箇所があれば、プレイヤー ID またはカードの一意 ID に変更する
+- [x] 10.2 (P) 席やカードのリストで index を key にしている箇所があれば、プレイヤー ID またはカードの一意 ID に変更する
   - PlayerSeats は既に player.id の場合は変更不要。PlayerSeat 内のカードリストがあれば同様に修正する
   - _Requirements: 11_
 
