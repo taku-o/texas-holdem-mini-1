@@ -31,17 +31,17 @@
 
 ---
 
-- [ ] 3. useGameController の非同期キャンセルとクリーンアップ
-- [ ] 3.1 useGameController に AbortController とマウント状態管理を追加する
+- [x] 3. useGameController の非同期キャンセルとクリーンアップ
+- [x] 3.1 useGameController に AbortController とマウント状態管理を追加する
   - `src/application/useGameController.ts` に `abortControllerRef` と `isMountedRef` を追加し、`startGame` / `handleAction` 実行時に新しい `AbortController` を生成、前回値があれば `abort()` するように実装する。
   - `useEffect`（依存配列空）を導入し、クリーンアップで `abortControllerRef.current?.abort()` と `isMountedRef.current = false` を設定する。
   - `setGameState` を呼び出す箇所では `isMountedRef.current` を確認し、アンマウント後は状態更新を行わないようにする。
   - _Requirements: 3_
-- [ ] 3.2 非同期処理関数への signal 伝播の検討と実装（可能な範囲で）
+- [x] 3.2 非同期処理関数への signal 伝播の検討と実装（可能な範囲で）
   - `advanceUntilHumanTurn` / `handlePlayerAction` のシグネチャに `signal?: AbortSignal` を追加できるか検討し、影響範囲が許容できる場合のみ `AbortSignal` を渡してループ内で `signal.aborted` を監視する実装を行う。
   - シグネチャ拡張が困難な場合は、`isMountedRef` によるガードのみで要件を満たす方針とし、理由を設計ドキュメントかコメント（意図説明用）に残す。
   - _Requirements: 3_
-- [ ]* 3.3 useGameController のキャンセル動作に対するテスト追加
+- [x]* 3.3 useGameController のキャンセル動作に対するテスト追加
   - 単体テストまたはフックのテストで、`startGame` 実行後すぐにクリーンアップ相当の処理（アンマウント）を呼び出しても、後続の非同期完了時に `setGameState` が呼ばれないことを確認する。
   - 可能であれば、`AbortController` の `abort()` を手動で呼び出したケースでも同様に安全に処理が終了することを確認する。
   - _Requirements: 3_
