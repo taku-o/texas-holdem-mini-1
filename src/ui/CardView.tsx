@@ -19,7 +19,11 @@ export function CardView({ card, faceDown }: CardViewProps) {
 
   if (showBack) {
     return (
-      <div className="w-12 h-16 rounded-lg shadow-sm bg-blue-800 border border-blue-900" />
+      <div
+        className="w-12 h-16 rounded-lg shadow-sm bg-blue-800 border border-blue-900"
+        role="img"
+        aria-label="Card back"
+      />
     )
   }
 

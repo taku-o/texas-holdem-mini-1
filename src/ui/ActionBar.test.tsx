@@ -430,6 +430,225 @@ describe('ActionBar', () => {
     })
   })
 
+  describe('11.1: チップ額のクライアント側バリデーション', () => {
+    test('should disable confirm button when chipAmount is below min', () => {
+      // Given: bet入力モードで数値入力をmin未満に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力をmin未満の値にする
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '0' } })
+
+      // Then: Confirmボタンが無効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).toBeDisabled()
+    })
+
+    test('should disable confirm button when chipAmount exceeds max', () => {
+      // Given: bet入力モードで数値入力をmax超過に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力をmax超過の値にする
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '600' } })
+
+      // Then: Confirmボタンが無効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).toBeDisabled()
+    })
+
+    test('should enable confirm button when chipAmount equals min', () => {
+      // Given: bet入力モードで数値入力をmin値に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力をmin値に設定する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: String(BIG_BLIND) } })
+
+      // Then: Confirmボタンが有効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).not.toBeDisabled()
+    })
+
+    test('should enable confirm button when chipAmount equals max', () => {
+      // Given: bet入力モードで数値入力をmax値に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力をmax値に設定する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '500' } })
+
+      // Then: Confirmボタンが有効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).not.toBeDisabled()
+    })
+
+    test('should not call onAction when confirm is clicked with invalid chipAmount', () => {
+      // Given: bet入力モードで数値入力をmax超過に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      const { onAction } = renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '600' } })
+
+      // When: Confirmボタンをクリックする（disabled状態）
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      fireEvent.click(confirmButton)
+
+      // Then: onActionが呼ばれない
+      expect(onAction).not.toHaveBeenCalled()
+    })
+
+    test('should disable confirm button when raise chipAmount is below min', () => {
+      // Given: raise入力モードで数値入力をmin未満に設定
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'call' },
+        { type: 'raise', min: 30, max: 510 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
+
+      // When: 数値入力をmin未満の値にする
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '10' } })
+
+      // Then: Confirmボタンが無効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).toBeDisabled()
+    })
+  })
+
+  describe('11.2: チップ入力のアクセシビリティラベル', () => {
+    test('should have aria-label on slider when in bet mode', () => {
+      // Given: bet入力モードが表示されている
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+
+      // When: Betボタンをクリックする
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // Then: スライダーにaria-labelが設定されている
+      const slider = screen.getByRole('slider')
+      expect(slider.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should have aria-label on number input when in bet mode', () => {
+      // Given: bet入力モードが表示されている
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+
+      // When: Betボタンをクリックする
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // Then: 数値入力にaria-labelが設定されている
+      const numberInput = screen.getByRole('spinbutton')
+      expect(numberInput.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should have aria-label on slider when in raise mode', () => {
+      // Given: raise入力モードが表示されている
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'call' },
+        { type: 'raise', min: 30, max: 510 },
+      ]
+      renderActionBar({ validActions })
+
+      // When: Raiseボタンをクリックする
+      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
+
+      // Then: スライダーにaria-labelが設定されている
+      const slider = screen.getByRole('slider')
+      expect(slider.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should have aria-label on number input when in raise mode', () => {
+      // Given: raise入力モードが表示されている
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'call' },
+        { type: 'raise', min: 30, max: 510 },
+      ]
+      renderActionBar({ validActions })
+
+      // When: Raiseボタンをクリックする
+      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
+
+      // Then: 数値入力にaria-labelが設定されている
+      const numberInput = screen.getByRole('spinbutton')
+      expect(numberInput.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should distinguish bet and raise in aria-label', () => {
+      // Given: bet と raise のそれぞれの入力モード
+
+      // When: bet モードでスライダーのラベルを取得
+      const validActionsBet: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      const { unmount } = render(
+        <ActionBar validActions={validActionsBet} onAction={vi.fn()} />,
+      )
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+      const betSliderLabel = screen.getByRole('slider').getAttribute('aria-label')
+      unmount()
+
+      // When: raise モードでスライダーのラベルを取得
+      const validActionsRaise: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'call' },
+        { type: 'raise', min: 30, max: 510 },
+      ]
+      render(
+        <ActionBar validActions={validActionsRaise} onAction={vi.fn()} />,
+      )
+      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
+      const raiseSliderLabel = screen.getByRole('slider').getAttribute('aria-label')
+
+      // Then: bet と raise のラベルが異なる
+      expect(betSliderLabel).not.toBe(raiseSliderLabel)
+    })
+  })
+
   describe('8.2: クイックベットボタン', () => {
     test('should provide all-in quick bet button', () => {
       // Given: bet入力モードが表示されている

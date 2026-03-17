@@ -102,6 +102,53 @@ describe('CardView', () => {
     })
   })
 
+  describe('11.3: 裏面のアクセシビリティ', () => {
+    test('should have role="img" on card back when faceDown is true', () => {
+      // Given: カードを裏面で表示
+      const aceOfSpades = card('A', 'spades')
+
+      // When: faceDown=trueでCardViewをレンダリングする
+      const { container } = render(<CardView card={aceOfSpades} faceDown={true} />)
+
+      // Then: 裏面のdivにrole="img"が設定されている
+      expect(container.querySelector('[role="img"]')).toBeTruthy()
+    })
+
+    test('should have aria-label on card back when faceDown is true', () => {
+      // Given: カードを裏面で表示
+      const aceOfSpades = card('A', 'spades')
+
+      // When: faceDown=trueでCardViewをレンダリングする
+      render(<CardView card={aceOfSpades} faceDown={true} />)
+
+      // Then: 裏面のdivにaria-labelが設定されている
+      const imgElement = screen.getByRole('img')
+      expect(imgElement.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should have role="img" and aria-label on card back when card is null', () => {
+      // Given: カードがnull
+
+      // When: card=nullでCardViewをレンダリングする
+      render(<CardView card={null} faceDown={false} />)
+
+      // Then: 裏面のdivにrole="img"とaria-labelが設定されている
+      const imgElement = screen.getByRole('img')
+      expect(imgElement.getAttribute('aria-label')).toBeTruthy()
+    })
+
+    test('should not have role="img" on face-up card', () => {
+      // Given: カードを表面で表示
+      const aceOfSpades = card('A', 'spades')
+
+      // When: faceDown=falseでCardViewをレンダリングする
+      const { container } = render(<CardView card={aceOfSpades} faceDown={false} />)
+
+      // Then: 表面のカードにはrole="img"がない
+      expect(container.querySelector('[role="img"]')).toBeNull()
+    })
+  })
+
   describe('裏面表示', () => {
     test('should not display rank or suit when faceDown is true', () => {
       // Given: カードを裏面で表示
