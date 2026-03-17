@@ -1,0 +1,35 @@
+# AI生成コードレビュー
+
+## 結果: REJECT
+
+## サマリー
+未使用依存パッケージ、動作しないlintスクリプト、常にパスするテストアサーションの3件のブロッキング問題を検出。
+
+## 検証した項目
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| 仮定の妥当性 | ✅ | タスク1.1+1.2の要件と実装が一致 |
+| API/ライブラリの実在 | ✅ | `@tailwindcss/vite`, `vitest/config`, `createRoot` 等すべて正当 |
+| コンテキスト適合 | ✅ | グリーンフィールド、design.md準拠 |
+| スコープ | ✅ | 計画で宣言した全ファイルが作成済み、過不足なし |
+| フォールバック濫用 | ❌ | テスト内で常にtruthyになるフォールバック |
+| 未使用コード | ❌ | 未使用依存パッケージ、動作しないスクリプト |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | カテゴリ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | AI-001-fallback-test | fallback-abuse | フォールバック濫用 | `src/App.test.tsx:12` | `?? document.body` により `toBeTruthy()` が常にパスする。`#root` 不在でも `document.body` は truthy | `const { container } = render(<App />)` + `expect(container.firstChild).toBeTruthy()` に変更 |
+| 2 | AI-002-unused-dep | unused-code | 未使用依存 | `package.json:18` | `@testing-library/jest-dom` が devDependencies にあるが、src/ 内で一度もインポートされず jest-dom マッチャーも未使用（grep 確認済み） | devDependencies から `@testing-library/jest-dom` を削除 |
+| 3 | AI-003-broken-script | wiring-forgotten | 配線忘れ | `package.json:9` | `"lint": "eslint ."` スクリプトがあるが eslint は未インストール（`node_modules/eslint` 不在確認済み）。`npm run lint` は失敗する | `scripts` から `lint` エントリを削除 |
+
+## 継続指摘（persists）
+なし（初回レビュー）
+
+## 解消済み（resolved）
+なし（初回レビュー）
+
+## 再開指摘（reopened）
+なし（初回レビュー）
+
+## REJECT判定条件
+- `new` が3件（AI-001, AI-002, AI-003）あるため REJECT

@@ -1,0 +1,16 @@
+# 決定ログ
+
+## 1. vitest v3 を採用（計画の v2 から変更）
+- **背景**: vitest v2 は内部に vite v5 をバンドルしており、トップレベルの vite v6 と型が競合して `tsc -b` がエラーになる
+- **検討した選択肢**: vitest v2 + 型キャスト / vitest v2 + 別設定ファイル / vitest v3 にアップグレード
+- **理由**: vitest v3 は vite v6 をネイティブにサポートし、型の競合なくビルドが通る。ワークアラウンド不要
+
+## 2. tsconfig.app.json からテストファイルを除外
+- **背景**: テストファイル（App.test.tsx）で `screen` がインポートされているが未使用であり、`noUnusedLocals: true` で型チェックエラーになる
+- **検討した選択肢**: テストファイルを除外する / `noUnusedLocals` を無効にする
+- **理由**: テストファイルはプロダクションビルドに含めるべきではない。Vite テンプレートの標準的なパターンに準拠
+
+## 3. defineConfig を vitest/config からインポート
+- **背景**: vite.config.ts に `test` プロパティを含めるために、vitest の型定義が必要
+- **検討した選択肢**: `/// <reference types="vitest" />` + vite の defineConfig / vitest/config の defineConfig
+- **理由**: vitest/config の defineConfig は test プロパティを含む型を提供し、型安全にテスト設定を記述できる
