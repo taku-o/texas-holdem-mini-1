@@ -66,6 +66,14 @@ export function ActionBar({
     setChipInputMode(null)
   }
 
+  function handleChipAmountChange(value: number) {
+    if (!chipInputMode) return
+    const action = findRangeAction(chipInputMode)
+    if (!action) return
+    const clipped = Math.min(Math.max(value, action.min), action.max)
+    setChipAmount(clipped)
+  }
+
   function handleAllIn() {
     if (!chipInputMode) return
     const action = findRangeAction(chipInputMode)
@@ -103,7 +111,7 @@ export function ActionBar({
           sliderProps={getSliderProps()}
           chipAmount={chipAmount}
           isValid={isChipAmountValid()}
-          onChipAmountChange={setChipAmount}
+          onChipAmountChange={handleChipAmountChange}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
           onAllIn={handleAllIn}

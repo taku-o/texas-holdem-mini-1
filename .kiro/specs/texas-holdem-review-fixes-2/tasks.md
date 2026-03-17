@@ -17,13 +17,13 @@
 
 ---
 
-- [ ] 2. ActionBar の数値入力 UX 改善
-- [ ] 2.1 ActionBar の数値入力ロジックを設計どおりに拡張する
+- [x] 2. ActionBar の数値入力 UX 改善
+- [x] 2.1 ActionBar の数値入力ロジックを設計どおりに拡張する
   - `src/ui/ActionBar.tsx` の `ChipInput` 内 `onChange` ハンドラ（`onChipAmountChange` に渡している部分）に対して、`findRangeAction(mode)` の `min` / `max` を用いたクリップ処理を追加する。
   - 入力値が `min` 未満の場合は `min` に、`max` を超える場合は `max` に丸めてから `setChipAmount` を呼ぶように実装する。
   - スライダー (`type="range"`) と数値入力 (`type="number"`) の双方から同じクリップロジックを通るようにし、UI 上の表示と内部状態が常に一致するようにする。
   - _Requirements: 2_
-- [ ]* 2.2 ActionBar の数値入力に対するテスト追加
+- [x]* 2.2 ActionBar の数値入力に対するテスト追加
   - 単体テストまたはコンポーネントテストで、`min - step` や `max + step` など範囲外の値を入力した際に内部の `chipAmount` がレンジ内にクリップされることを確認する。
   - 既存の `isChipAmountValid()` と Confirm ボタンの有効/無効状態が、クリップ後の値と整合していることを確認する。
   - Playwright などの E2E テストがあれば、ブラウザ上でユーザーが範囲外の値を直接入力した場合でも、最終的に表示値がレンジ内になっていることを確認する。

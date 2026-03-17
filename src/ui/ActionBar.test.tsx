@@ -431,44 +431,6 @@ describe('ActionBar', () => {
   })
 
   describe('11.1: チップ額のクライアント側バリデーション', () => {
-    test('should disable confirm button when chipAmount is below min', () => {
-      // Given: bet入力モードで数値入力をmin未満に設定
-      const validActions: ValidAction[] = [
-        { type: 'fold' },
-        { type: 'check' },
-        { type: 'bet', min: BIG_BLIND, max: 500 },
-      ]
-      renderActionBar({ validActions })
-      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
-
-      // When: 数値入力をmin未満の値にする
-      const numberInput = screen.getByRole('spinbutton')
-      fireEvent.change(numberInput, { target: { value: '0' } })
-
-      // Then: Confirmボタンが無効になる
-      const confirmButton = screen.getByRole('button', { name: /confirm/i })
-      expect(confirmButton).toBeDisabled()
-    })
-
-    test('should disable confirm button when chipAmount exceeds max', () => {
-      // Given: bet入力モードで数値入力をmax超過に設定
-      const validActions: ValidAction[] = [
-        { type: 'fold' },
-        { type: 'check' },
-        { type: 'bet', min: BIG_BLIND, max: 500 },
-      ]
-      renderActionBar({ validActions })
-      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
-
-      // When: 数値入力をmax超過の値にする
-      const numberInput = screen.getByRole('spinbutton')
-      fireEvent.change(numberInput, { target: { value: '600' } })
-
-      // Then: Confirmボタンが無効になる
-      const confirmButton = screen.getByRole('button', { name: /confirm/i })
-      expect(confirmButton).toBeDisabled()
-    })
-
     test('should enable confirm button when chipAmount equals min', () => {
       // Given: bet入力モードで数値入力をmin値に設定
       const validActions: ValidAction[] = [
@@ -506,9 +468,102 @@ describe('ActionBar', () => {
       const confirmButton = screen.getByRole('button', { name: /confirm/i })
       expect(confirmButton).not.toBeDisabled()
     })
+  })
 
-    test('should not call onAction when confirm is clicked with invalid chipAmount', () => {
-      // Given: bet入力モードで数値入力をmax超過に設定
+  describe('2.1: 数値入力のクリップ処理', () => {
+    test('should clip chipAmount to min when input value is below min in bet mode', () => {
+      // Given: bet入力モードが表示されている（min=BIG_BLIND, max=500）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力にmin未満の値（0）を入力する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '0' } })
+
+      // Then: chipAmountがminにクリップされる
+      expect(numberInput).toHaveProperty('value', String(BIG_BLIND))
+    })
+
+    test('should clip chipAmount to max when input value exceeds max in bet mode', () => {
+      // Given: bet入力モードが表示されている（min=BIG_BLIND, max=500）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力にmax超過の値（600）を入力する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '600' } })
+
+      // Then: chipAmountがmaxにクリップされる
+      expect(numberInput).toHaveProperty('value', '500')
+    })
+
+    test('should keep chipAmount as-is when input value is within range', () => {
+      // Given: bet入力モードが表示されている（min=BIG_BLIND, max=500）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力に範囲内の値（200）を入力する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '200' } })
+
+      // Then: chipAmountがそのまま反映される
+      expect(numberInput).toHaveProperty('value', '200')
+    })
+
+    test('should enable confirm button after clipping out-of-range input', () => {
+      // Given: bet入力モードが表示されている（min=BIG_BLIND, max=500）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'check' },
+        { type: 'bet', min: BIG_BLIND, max: 500 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /bet/i }))
+
+      // When: 数値入力にmax超過の値を入力する（クリップされる）
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '600' } })
+
+      // Then: クリップ後の値は範囲内なのでConfirmボタンが有効になる
+      const confirmButton = screen.getByRole('button', { name: /confirm/i })
+      expect(confirmButton).not.toBeDisabled()
+    })
+
+    test('should clip chipAmount to min when input value is below min in raise mode', () => {
+      // Given: raise入力モードが表示されている（min=30, max=510）
+      const validActions: ValidAction[] = [
+        { type: 'fold' },
+        { type: 'call' },
+        { type: 'raise', min: 30, max: 510 },
+      ]
+      renderActionBar({ validActions })
+      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
+
+      // When: 数値入力にmin未満の値（10）を入力する
+      const numberInput = screen.getByRole('spinbutton')
+      fireEvent.change(numberInput, { target: { value: '10' } })
+
+      // Then: chipAmountがminにクリップされる
+      expect(numberInput).toHaveProperty('value', '30')
+    })
+
+    test('should call onAction with clipped amount when confirm is clicked after out-of-range input', () => {
+      // Given: bet入力モードで数値入力にmax超過の値を入力（クリップされる）
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
@@ -519,31 +574,12 @@ describe('ActionBar', () => {
       const numberInput = screen.getByRole('spinbutton')
       fireEvent.change(numberInput, { target: { value: '600' } })
 
-      // When: Confirmボタンをクリックする（disabled状態）
+      // When: Confirmボタンをクリックする
       const confirmButton = screen.getByRole('button', { name: /confirm/i })
       fireEvent.click(confirmButton)
 
-      // Then: onActionが呼ばれない
-      expect(onAction).not.toHaveBeenCalled()
-    })
-
-    test('should disable confirm button when raise chipAmount is below min', () => {
-      // Given: raise入力モードで数値入力をmin未満に設定
-      const validActions: ValidAction[] = [
-        { type: 'fold' },
-        { type: 'call' },
-        { type: 'raise', min: 30, max: 510 },
-      ]
-      renderActionBar({ validActions })
-      fireEvent.click(screen.getByRole('button', { name: /raise/i }))
-
-      // When: 数値入力をmin未満の値にする
-      const numberInput = screen.getByRole('spinbutton')
-      fireEvent.change(numberInput, { target: { value: '10' } })
-
-      // Then: Confirmボタンが無効になる
-      const confirmButton = screen.getByRole('button', { name: /confirm/i })
-      expect(confirmButton).toBeDisabled()
+      // Then: onActionがクリップされた値（max=500）で呼ばれる
+      expect(onAction).toHaveBeenCalledWith({ type: 'bet', amount: 500 })
     })
   })
 
