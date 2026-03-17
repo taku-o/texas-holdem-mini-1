@@ -98,9 +98,3 @@ takt --task "/kiro:spec-impl texas-holdem-review-fixes 12"
 
 
 
-
-
-
-
-
-
