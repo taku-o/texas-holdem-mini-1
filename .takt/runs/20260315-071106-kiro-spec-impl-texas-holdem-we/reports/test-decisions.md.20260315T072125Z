@@ -1,0 +1,16 @@
+# 決定ログ
+
+## 1. テストファイルの配置場所
+- **背景**: 既存テストは `src/domain/` にコロケーション（`*.test.ts`）で配置されている。gameFlow は `src/application/` に新規作成予定
+- **検討した選択肢**: `src/application/gameFlow.test.ts`（コロケーション） / `src/__tests__/gameFlow.test.ts`（別ディレクトリ）
+- **理由**: 既存プロジェクトのコロケーションパターンに従い、`src/application/gameFlow.test.ts` に配置
+
+## 2. useGameController のテスト作成を見送り
+- **背景**: 計画では `useGameController.ts`（React フック）も実装対象だが、テスト対象としての優先度を判断する必要があった
+- **検討した選択肢**: gameFlow + useGameController の両方をテスト / gameFlow のみをテスト
+- **理由**: useGameController は useState の薄いラッパー（30〜50行、ロジックなし）。ゲームフロー制御の全ロジックは gameFlow.ts の純粋関数に集約されるため、テスト価値はそちらに集中。useGameController はReact Testing Libraryが必要で、テストの複雑度対効果が低い
+
+## 3. インテグレーションテストの包含
+- **背景**: gameFlow は gameEngine（betting, handProgression, showdown）と cpuStrategy を横断するデータフローを持つ（3モジュール以上）
+- **検討した選択肢**: ユニットテストのみ / ユニットテスト + インテグレーションテスト
+- **理由**: ポリシーに「3つ以上のモジュールを横断するデータフロー → インテグレーションテスト必須」とあるため、「統合テスト: 完全なゲームフロー」セクションでsetupNewGame→advanceUntilHumanTurn→handlePlayerActionの一連のフローを検証するテストを追加

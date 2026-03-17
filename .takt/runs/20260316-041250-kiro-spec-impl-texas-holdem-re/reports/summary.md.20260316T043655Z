@@ -1,0 +1,24 @@
+# タスク完了サマリー
+
+## タスク
+タスク2「ブラインド・ショートスタックの扱いの修正」— BBショートスタック時の `currentBet` を実際のポスト額に修正し、チップ0プレイヤーのブラインドスキップ機能を実装。
+
+## 結果
+完了
+
+## 変更内容
+
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/domain/dealing.ts` | `findNextEligibleIndex` ヘルパー追加、SB/BBスキップロジック、`currentBet: bbAmount` に変更 |
+| 変更 | `src/domain/handProgression.ts` | `preparePreflopRound` のBBインデックス取得元を `lastAggressorIndex!` に変更 |
+| 変更 | `src/domain/dealing.test.ts` | 新テスト7件追加（ショートスタック・スキップ関連）、既存テスト1件の名称更新 |
+| 変更 | `src/domain/handProgression.test.ts` | 新テスト2件追加（スキップ後UTG・currentBet検証）、既存テスト1件のアサーション修正 |
+| 変更 | `src/application/gameFlow.test.ts` | 既存テスト2件のアサーションをチップ保存則に変更 |
+
+## 確認コマンド
+
+```bash
+npx vitest run
+npm run build  # ※ActionBar.tsx:35の既存エラーあり（タスク2とは無関係）
+```

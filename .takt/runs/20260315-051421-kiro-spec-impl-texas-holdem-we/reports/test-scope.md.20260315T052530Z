@@ -1,0 +1,24 @@
+# 変更スコープ宣言
+
+## タスク
+ゲームエンジン中核ロジック（タスク4: サブタスク4.1〜4.7）のテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/domain/deck.test.ts` |
+| 作成 | `src/domain/gameSetup.test.ts` |
+| 作成 | `src/domain/dealing.test.ts` |
+| 作成 | `src/domain/betting.test.ts` |
+| 作成 | `src/domain/showdown.test.ts` |
+| 作成 | `src/domain/handProgression.test.ts` |
+| 作成 | `src/domain/gameEngine.integration.test.ts` |
+
+## 推定規模
+Large
+
+## 影響範囲
+- `src/domain/` 配下の新規モジュール（deck, gameSetup, dealing, betting, showdown, handProgression, gameEngine）
+- 既存の `types.ts`（GameStateに `lastAggressorIndex` が追加される前提）
+- 既存の `handEvaluator.ts`（showdownテストから参照）
+- 既存の `constants.ts`（各テストから参照）

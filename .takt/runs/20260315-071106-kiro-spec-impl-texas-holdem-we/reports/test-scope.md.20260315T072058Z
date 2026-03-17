@@ -1,0 +1,17 @@
+# 変更スコープ宣言
+
+## タスク
+ゲームコントローラー（gameFlow.ts）のテスト作成 - 人間アクション適用→CPU自動ターン→フェーズ遷移→ハンド終了/ゲーム終了を検証
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/application/gameFlow.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `src/application/gameFlow.ts`（テスト対象、未実装）
+- `src/domain/gameEngine.ts`（依存する Domain 層バレル）
+- `src/domain/cpuStrategy.ts`（`decideAction` を gameFlow 内部で使用）

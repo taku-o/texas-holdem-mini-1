@@ -1,0 +1,49 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+タスク指示書（Task 12）: レビュー指摘の未使用インポート3件を修正する。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | `cpuStrategy.validation.test.ts` から未使用の `ValidAction` インポートを削除 | ✅ | `src/domain/cpuStrategy.validation.test.ts:5` — `import type { GameState } from './types'` のみ（`ValidAction` なし） |
+| 2 | `gameEngine.shortstack.integration.test.ts` から未使用の `resolveUncontestedPot` インポートを削除 | ✅ | `src/domain/gameEngine.shortstack.integration.test.ts:5` — `import { evaluateShowdown } from './showdown'`（`resolveUncontestedPot` なし） |
+| 3 | `gameEngine.shortstack.integration.test.ts` から未使用の `SMALL_BLIND` インポートを削除 | ✅ | `src/domain/gameEngine.shortstack.integration.test.ts:6` — `import { INITIAL_CHIPS, PLAYER_COUNT, BIG_BLIND } from './constants'`（`SMALL_BLIND` なし） |
+| 4 | 既存テストにリグレッションがないこと | ✅ | `npm test` — 496 passed, 1 failed（失敗はタスク12以前から存在する `gameEngine.timeout.test.ts` のタイムアウト問題。stash検証で確認済み） |
+| 5 | ビルドが成功すること | ✅ | `npm run build` — 成功（exit code 0） |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npm test` — 496 passed, 1 failed（既存問題、タスク12起因でない） |
+| ビルド | ✅ | `npm run build` 成功 |
+| リグレッション | ✅ | stash前後比較: 変更前2件失敗→変更後1件失敗（タスク12で改善） |
+| AIレビュー指摘対応 | ✅ | AIR-012-01, AIR-012-02, AIR-012-03 すべて解消済み |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+| finding_id | 解消根拠 |
+|------------|----------|
+| AIR-012-01 | `src/domain/cpuStrategy.validation.test.ts:5` — `ValidAction` 削除確認 |
+| AIR-012-02 | `src/domain/gameEngine.shortstack.integration.test.ts:5` — `resolveUncontestedPot` 削除確認 |
+| AIR-012-03 | `src/domain/gameEngine.shortstack.integration.test.ts:6` — `SMALL_BLIND` 削除確認 |
+
+## 成果物
+
+- 変更: `src/domain/cpuStrategy.validation.test.ts` — 未使用インポート `ValidAction` 削除
+- 変更: `src/domain/gameEngine.shortstack.integration.test.ts` — 未使用インポート `resolveUncontestedPot`, `SMALL_BLIND` 削除
+
+## REJECT判定条件
+
+- `new`: 0件、`persists`: 0件 → **APPROVE**

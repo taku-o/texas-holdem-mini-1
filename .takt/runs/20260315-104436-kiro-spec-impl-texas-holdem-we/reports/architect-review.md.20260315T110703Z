@@ -1,0 +1,31 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`gameFlow.ts:71-72` に What/How コメント（関数名の言い換え）が存在する。構造・設計・レイヤー分離・テストカバレッジは良好。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-gameFlow-L71 | what-comment | スコープ内 | `src/application/gameFlow.ts:71-72` | What/Howコメント。`!canAnyoneStillBet(current)` → `skipToShowdownAndResolve` のコードは関数名だけで意図が伝わるが、コメントが `canAnyoneStillBet` の実装詳細（「全員all-in」「アクション可能なプレイヤーが1人以下」）と `skipToShowdownAndResolve` の関数名をそのまま言い換えている | コメント2行を削除する。ドメイン意味の補足が必要なら `canAnyoneStillBet` 関数定義（L17-22）にJSDocを追加する |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `ARCH-001-gameFlow-L71`（new）が1件存在するため REJECT

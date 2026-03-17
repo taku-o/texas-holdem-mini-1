@@ -1,0 +1,23 @@
+# 変更スコープ宣言
+
+## タスク
+テーブル・カード・席の表示UIコンポーネント（CardView, TableView, PlayerSeat, PlayerSeats）のテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/ui/CardView.test.tsx` |
+| 作成 | `src/ui/TableView.test.tsx` |
+| 作成 | `src/ui/PlayerSeat.test.tsx` |
+| 作成 | `src/ui/PlayerSeats.test.tsx` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `src/ui/CardView.tsx`（未実装、テスト対象）
+- `src/ui/TableView.tsx`（未実装、テスト対象）
+- `src/ui/PlayerSeat.tsx`（未実装、テスト対象）
+- `src/ui/PlayerSeats.tsx`（未実装、テスト対象）
+- `src/domain/types.ts`（型参照のみ）
+- `src/domain/testHelpers.ts`（テストヘルパー利用）

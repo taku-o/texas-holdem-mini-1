@@ -1,0 +1,52 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書（タスク9/9.1）および要件14の受け入れ基準から要件を抽出し、実コードで個別検証した。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | startGame で `setGameState(advanced)` を関数形式 `setGameState(() => advanced)` に変更 | ✅ | `src/application/useGameController.ts:32` — `setGameState(() => advanced)` を確認 |
+| 2 | startGame のエラーハンドラで `setGameState(null)` を関数形式 `setGameState(() => null)` に変更 | ✅ | `src/application/useGameController.ts:36` — `setGameState(() => null)` を確認 |
+| 3 | テストが作成され、関数形式で呼ばれることを検証している | ✅ | `src/application/useGameController.setStateFn.test.ts` — 5テストケース（正常系2、異常系2、結果一致1） |
+| 4 | AI Review 指摘 AIR-009-001（空の catch ブロック）の修正 | ❌ | `src/application/useGameController.ts:37-39` — 空catchブロックがそのまま残存 |
+| 5 | AI Review 指摘 AIR-009-002（handleAction の setState 形式不統一）の修正 | ❌ | `src/application/useGameController.ts:63` — `setGameState(result)` が直接値渡しのまま |
+
+- ❌ が2件あるため REJECT 必須
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 26ファイル 457テスト全パス |
+| ビルド | ⚠️ | `npm run build` — `ActionBar.tsx:35` でTS型エラー。git stash で確認した結果、タスク9以前から存在する既存問題でありタスク9に起因しない |
+| 動作確認 | ✅ | startGame内の2箇所が関数形式に変更されていることを実コードで確認済み |
+| スコープクリープ | ✅ | 変更は `useGameController.ts` の2行＋テストファイル追加のみ。不要な削除なし |
+
+## 今回の指摘（new）
+
+| # | finding_id | 項目 | 根拠 | 理由 | 必要アクション |
+|---|------------|------|------|------|----------------|
+| 1 | VAL-009-001 | 空の catch ブロック（エラー握りつぶし） | `src/application/useGameController.ts:37-39` | AI Review（AIR-009-001）で指摘済みだが未修正。`try { setGameState(() => null) } catch { // React environment may already be torn down }` の内側try-catchが空catch。ReactのsetStateはアンマウント後も例外を投げない（React 18）ため、内側try-catch自体が不要。レビューポリシー「エラーの握りつぶし（空の catch）」に該当 | 内側try-catchを削除し、catch(e)ブロック内で`setGameState(() => null)`を直接呼び出す |
+| 2 | VAL-009-002 | handleAction の setState 形式不統一 | `src/application/useGameController.ts:63` | AI Review（AIR-009-002）で指摘済みだが未修正。同一フック内で `setGameState(() => advanced)`（L32）と `setGameState(result)`（L63）が混在。タスク目的は「関数形式に統一」であり、変更ファイル内のボーイスカウトルール対象 | `setGameState(result)` → `setGameState(() => result)` に変更 |
+
+## 継続指摘（persists）
+
+なし（今回が supervisor 初回検証のため、前回指摘なし）
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 変更: `src/application/useGameController.ts`（L32, L36 の2行変更）
+- 作成: `src/application/useGameController.setStateFn.test.ts`（5テストケース）
+
+## REJECT判定条件
+
+- `VAL-009-001`（new）: 空catchブロックはレビューポリシーのREJECT基準「エラーの握りつぶし（空の catch）」に該当。変更ファイル内でありボーイスカウトルール適用。数秒で修正可能
+- `VAL-009-002`（new）: 変更ファイル内のスタイル不統一。タスク目的が「関数形式に統一」であるにもかかわらず同一フック内で混在。ボーイスカウトルール適用。数秒で修正可能
+- AI Reviewで正当にREJECTされた2件の指摘が、ai_fix/fixムーブメントを経ずに未対応のまま supervisor に到達している

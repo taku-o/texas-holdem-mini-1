@@ -1,0 +1,28 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`findNextEligibleIndex`（dealing.ts）と `getNextDealerIndex`（handProgression.ts）が本質的に同一の循環探索ロジックを重複実装しており、DRY違反に該当する。共通ヘルパーに統一すべき。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-dry-eligible-index | dry-violation | スコープ内 | `src/domain/dealing.ts:4-16`, `src/domain/handProgression.ts:63-71` | `findNextEligibleIndex` と `getNextDealerIndex` は共に「`chips > 0` の次プレイヤーを循環探索する」同一ロジック。差異は入力型（`Player[]` vs `GameState`）とフォールバック値（`-1` vs `state.dealerIndex`）のみ | `findNextEligibleIndex` を export して共通化し、`getNextDealerIndex` は `const r = findNextEligibleIndex(state.players, state.dealerIndex); return r === -1 ? state.dealerIndex : r;` とする |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## REJECT判定条件
+- ARCH-001-dry-eligible-index（`new`）が1件あるため REJECT

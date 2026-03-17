@@ -1,0 +1,6 @@
+# 決定ログ
+
+## 1. テストファイル固有のデフォルト値はローカルラッパーで対応
+- **背景**: 既存テストファイルごとにcreateTestPlayer/createTestStateのデフォルト値が異なっていた（例: dealing.test.tsはholeCards=[]、showdown.test.tsはphase='showdown'）
+- **検討した選択肢**: (A) 共通ヘルパーのみ使用し全テストでoverrideを渡す (B) 共通ヘルパーをベースにローカルラッパーで差分を吸収
+- **理由**: (B)を選択。既存テストコードの変更を最小限に抑えつつ、card/createSimpleDeck/createTestPlayerの本質的な実装コードの重複を排除できる

@@ -1,0 +1,56 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | CPUの連続ターン処理をメインスレッドを長時間ブロックしない形に変更する | ✅ | `src/application/gameFlow.ts:51-53` — `yieldToMainThread()` が `setTimeout(resolve, 0)` で実装。`:104` で各CPUアクション後に `await yieldToMainThread()` |
+| 2 | 一定件数ごとにyieldする、または非同期で次のティックに回す | ✅ | `src/application/gameFlow.ts:102-104` — CPUアクション適用後に毎回 `onProgress?.(current)` → `await yieldToMainThread()` |
+| 3 | 状態更新・再描画のサイクルが進むようにする | ✅ | `src/application/gameFlow.ts:58,103` — `onProgress` コールバックで中間状態を通知。`src/application/useGameController.ts:29,56` — `setGameState` を `onProgress` として渡す |
+| 4 | 呼び出し側（useGameController）とのインターフェースに合わせて実装する | ✅ | `src/application/useGameController.ts:11-12` — `startGame: () => void`, `handleAction: (action: PlayerAction) => void` の外部シグネチャ維持 |
+
+**タスク本来の目的は達成されている。** ただし、AIR-001 の修正が新たな回帰（unhandled promise rejection → テスト exit code 1）を生んでいる。
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ❌ | `npx vitest run` — 452 passed, **Errors: 1 error**（exit code 1） |
+| テスト（単体） | ❌ | `npx vitest run src/App.test.tsx` — 5 passed, **Errors: 2 errors**（exit code 1） |
+| 型チェック | ✅ | `npx tsc --noEmit` — エラーなし |
+| ビルド | ✅ | `npx vite build` — 成功 |
+
+## 今回の指摘（new）
+
+| # | finding_id | 項目 | 根拠 | 理由 | 必要アクション |
+|---|------------|------|------|------|----------------|
+| 1 | VAL-001 | `startGame` の `throw e` が unhandled promise rejection を生成 | `useGameController.ts:36` — `throw e` が async IIFE 内にあり、IIFE の promise を受け取る caller がいない | `App.test.tsx` がゲーム開始後にテスト環境を破棄 → `setTimeout` コールバック実行 → `setGameState` が `window is not defined` で失敗 → `catch` 内の `setGameState(null)` もさらに失敗 → `throw e` → unhandled rejection。`npx vitest run src/App.test.tsx` が exit code 1 で失敗し CI を破壊する | `throw e` を削除する。async IIFE 内の `catch` は最終的なエラーハンドラであり、再 throw しても受け取り手がいない。状態復旧（`setGameState(null)`, `gameStateRef.current = null`）は `try` で囲んで安全に実行し、`console.error(e)` で記録するのみとする。IIFE 最外殻の catch は「握りつぶし」ではなく「最終ハンドラ」として適切に機能させる |
+| 2 | VAL-002 | `handleAction` のエラーハンドリング欠落 | `useGameController.ts:50-63` — `try/finally` のみで `catch` がない | `.catch(console.error)` 削除後、`handlePlayerAction` が例外を投げた場合に unhandled rejection になる。`processingRef` は `finally` でリセットされるが、エラー記録がなく原因特定が困難になる | `startGame` と同様に `catch (e)` ブロックを追加し、`console.error(e)` でエラーを記録する。再 throw しないこと（async IIFE の最終ハンドラのため） |
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+| finding_id | 解消根拠 |
+|------------|----------|
+| AIR-001 | `useGameController.ts:30,53` — `.catch(console.error)` は削除済み。`startGame` に `try/catch/finally` と状態復旧あり。ただし `throw e` が新問題 VAL-001 を生成 |
+| AIR-002 | `useGameController.ts:78` — コメント削除済み。`gameStateRef.current = gameState` のみ |
+| AIR-003 | `gameFlow.test.ts:291` — `let state = fullState` 削除済み。`fullState` を直接使用 |
+| AIR-004 | `useGameController.ts:21-22` — `if (processingRef.current) return` + `processingRef.current = true` 追加済み。`try/finally` で `processingRef` リセット |
+
+## 成果物
+
+- 変更: `src/application/gameFlow.ts` — async化、yieldToMainThread、onProgressコールバック
+- 変更: `src/application/useGameController.ts` — async IIFE化、gameStateRef/processingRef追加、エラーハンドリング改善（不完全）
+- 変更: `src/application/gameFlow.test.ts` — async/await対応
+- 変更: `src/application/useGameController.test.ts` — async act + waitForパターン対応、二重実行防止テスト追加
+- 作成: `src/application/gameFlow.async.test.ts` — 非同期動作・onProgress専用テスト
+
+## REJECT判定条件
+
+- `new` が2件（VAL-001, VAL-002）あるため REJECT
+- VAL-001 は `npx vitest run` で exit code 1 を発生させる回帰であり、CI を破壊する

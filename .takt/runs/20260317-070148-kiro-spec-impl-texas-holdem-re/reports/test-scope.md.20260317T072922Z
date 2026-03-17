@@ -1,0 +1,19 @@
+# 変更スコープ宣言
+
+## タスク
+タスク12: 結合・動作確認テストとドメイン層単体テスト補強
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/domain/gameEngine.shortstack.integration.test.ts` |
+| 作成 | `src/domain/betting.allin.test.ts` |
+| 作成 | `src/domain/cpuStrategy.validation.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- gameEngine結合テスト（ショートスタック + オールイン + チップ0除外シナリオ）
+- betting単体テスト（オールイン正常系の明示テスト）
+- cpuStrategy単体テスト（getValidActionsのmin/max範囲内検証）

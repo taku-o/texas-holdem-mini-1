@@ -1,0 +1,13 @@
+{
+  "task": "# タスク指示書\n\n## 概要\nPlayerSeats コンポーネントのレビュー指摘事項2件を修正する（冗長なprop削除、不要なラッパーdiv除去）\n\n## 作業内容\n\n### 1. humanPlayerId propの削除と player.isHuman への置き換え【優先度: 中】\n\n**対象モジュール:** PlayerSeats コンポーネント\n\n**作業内容:**\n- PlayerSeats コンポーネントから `humanPlayerId` propを削除する\n- `player.id === humanPlayerId` による判定を `player.isHuman` に置き換える\n- PlayerSeats の呼び出し元から `humanPlayerId` の受け渡しを削除する\n- `humanPlayerId` が未使用になった場合、関連する型定義・インターフェースからも削除する\n\n### 2. 不要なラッパー div の除去【優先度: 低〜中】\n\n**対象モジュール:** PlayerSeats コンポーネント、PlayerSeat コンポーネント\n\n**作業内容:**\n- PlayerSeats 内で各 PlayerSeat を囲んでいる `<div data-testid={...}>` ラッパーを除去する\n- PlayerSeat コンポーネントに `data-testid` propを受け取れるようにする（props型の拡張）\n- PlayerSeat のルート `<div>` に `data-testid` を付与する形に変更する\n\n## 確認方法\n- ビルド（型チェック）が通ること\n- 既存テストがパスすること\n- PlayerSeats の描画結果で不要なDOM階層が減っていること",
+  "piece": "default",
+  "runSlug": "20260315-111711-playerseats-2-prop-div",
+  "runRoot": ".takt/runs/20260315-111711-playerseats-2-prop-div",
+  "reportDirectory": ".takt/runs/20260315-111711-playerseats-2-prop-div/reports",
+  "contextDirectory": ".takt/runs/20260315-111711-playerseats-2-prop-div/context",
+  "logsDirectory": ".takt/runs/20260315-111711-playerseats-2-prop-div/logs",
+  "status": "completed",
+  "startTime": "2026-03-15T11:17:11.416Z",
+  "endTime": "2026-03-15T11:31:58.724Z",
+  "iterations": 7
+}

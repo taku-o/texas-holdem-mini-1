@@ -1,0 +1,3 @@
+# 決定ログ
+
+特筆すべき決定事項なし。既存の `gameFlow` モジュール（`handlePlayerAction`, `advanceUntilHumanTurn`）と `betting` モジュール（`getValidActions`）をそのまま利用し、React フックとして状態管理を追加した。

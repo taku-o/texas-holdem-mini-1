@@ -1,0 +1,23 @@
+# アーキテクチャレビュー
+
+## 結果: APPROVE
+
+## サマリー
+前回指摘した5件（AIR-001〜AIR-004, ARCH-001）はすべて適切に修正され、新たな構造・設計上の問題は検出されなかった。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| AIR-001 | `useGameController.ts:33-36` — `.catch(console.error)` 削除、`catch(e)` で状態復旧 + `throw e` に変更 |
+| AIR-004 | `useGameController.ts:21-22` — `processingRef` ガード追加、`useGameController.test.ts:391-406` にテスト追加 |
+| AIR-002 | `useGameController.ts:78` — 説明コメント削除 |
+| AIR-003 | `gameFlow.test.ts:291` — `let state = fullState` 削除、`fullState` を直接使用 |
+| ARCH-001 | `gameFlow.async.test.ts:204-205` — `expect(result.phase).toBe('idle')` + `expect(onProgress).not.toHaveBeenCalled()` に変更 |

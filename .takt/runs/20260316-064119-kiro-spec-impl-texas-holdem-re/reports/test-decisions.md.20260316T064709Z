@@ -1,0 +1,11 @@
+# 決定ログ
+
+## 1. 既存テストファイルを変更せず、新規ファイルに async 固有のテストを集約
+- **背景**: 既存の `gameFlow.test.ts` は同期 API を前提としており、async 化後に `await` の追加が必要。しかし write_tests フェーズではプロダクションコードの変更はできない。
+- **検討した選択肢**: (a) 既存テストに async テストを追加 (b) 新規ファイル `gameFlow.async.test.ts` に async 固有の振る舞いテストを集約
+- **理由**: 既存テストの `await` 追加は実装フェーズで行う。新規テストファイルでは async 固有の新しい振る舞い（Promise 返却、onProgress コールバック、yield to main thread）に焦点を当てる。
+
+## 2. useGameController のテストは新規作成しない
+- **背景**: useGameController の async 対応（二重実行防止、useRef）は React Hook のテストであり、非同期 state 更新のタイミング制御が必要。
+- **検討した選択肢**: (a) useGameController.async.test.ts を作成 (b) gameFlow の async テストのみ作成
+- **理由**: 二重実行防止や async state 更新のテストは、実装フェーズで useGameController.test.ts を直接更新するのが適切。gameFlow 層の async テストで onProgress とyield の振る舞いは検証できる。

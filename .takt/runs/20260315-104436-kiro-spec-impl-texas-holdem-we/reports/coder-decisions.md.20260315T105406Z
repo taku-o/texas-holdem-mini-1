@@ -1,0 +1,11 @@
+# 決定ログ
+
+## 1. vitest config に globals: true を追加
+- **背景**: `@testing-library/react` の自動クリーンアップが vitest の `afterEach` をグローバルに検出できず、テスト間で DOM がクリーンアップされなかった
+- **検討した選択肢**: (a) 各テストファイルに手動 cleanup を追加、(b) vitest config に `globals: true` を追加
+- **理由**: (b) を選択。プロジェクト全体で一度の設定変更で解決でき、テストファイル側に余計なボイラープレートが不要
+
+## 2. PlayerSeats テストの getByText を getAllByText に修正
+- **背景**: テストが `screen.getByText(/1000/)` で5席全員のチップ(1000)を検索したが、5つの一致要素が見つかり `getByText` がエラーになった
+- **検討した選択肢**: (a) テストのプレイヤーのチップ額をユニークにする、(b) `getAllByText` に変更して件数を検証
+- **理由**: (b) を選択。テストの意図は「5席分の表示確認」であり、`getAllByText` + `toHaveLength(5)` がより正確に意図を表現する

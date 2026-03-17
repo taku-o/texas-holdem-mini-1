@@ -1,0 +1,28 @@
+# 変更スコープ宣言
+
+## タスク
+レビュー指摘5件のコード重複を共通関数・ヘルパーの抽出により解消する
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `debug_common.ts` |
+| 変更 | `debug_game.ts` |
+| 変更 | `debug_game2.ts` |
+| 変更 | `debug_game3.ts` |
+| 変更 | `src/domain/testHelpers.ts` |
+| 変更 | `src/domain/gameEngine.integration.test.ts` |
+| 変更 | `src/application/useGameController.test.ts` |
+| 変更 | `src/application/gameFlow.test.ts` |
+| 変更 | `src/domain/gameSetup.test.ts` |
+| 変更 | `src/domain/showdown.test.ts` |
+
+## 推定規模
+Large
+
+## 影響範囲
+- デバッグスクリプト（debug_game*.ts）
+- テストユーティリティ（testHelpers.ts）
+- 全テストファイル（calcTotalChips 置換）
+- gameEngine.integration.test.ts（expectedExports定数化、ベッティングラウンドヘルパー）
+- useGameController.test.ts（waitForGameEnd ヘルパー）

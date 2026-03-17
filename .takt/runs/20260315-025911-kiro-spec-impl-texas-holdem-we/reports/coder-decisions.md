@@ -1,0 +1,6 @@
+# 決定ログ
+
+## 1. const enum の回避
+- **背景**: `@pokertools/evaluator` の `HandRank` は `const enum` として定義されており、`isolatedModules: true` 環境（Vite）ではインポートして使用できない
+- **検討した選択肢**: (A) tsconfig で `isolatedModules` を無効化 (B) 数値リテラルで直接マッピング (C) `as number` キャストで rankBoard の戻り値を扱う
+- **理由**: (B)+(C) を採用。tsconfig の変更はプロジェクト全体に影響するため避け、ライブラリの enum 値（0〜8）を数値キーのマッピングテーブルで対応した

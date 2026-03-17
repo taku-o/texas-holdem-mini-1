@@ -1,0 +1,33 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+ARCH-001（DRY違反）は `preparePreflopRound` 抽出により適切に解消。しかし、リファクタリングで再代入が不要になった `let` 宣言が `const` に更新されておらず、変更起因の冗長な宣言が2箇所に残存。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-002-let-to-const | refactoring-artifact | スコープ内 | `src/domain/gameSetup.ts:21`, `src/domain/handProgression.ts:87` | `preparePreflopRound` 抽出により `state` / `nextState` への再代入が不要になったが `let` 宣言が残存。リファクタリング起因の冗長な宣言 | 両箇所の `let` を `const` に変更する |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| ARCH-001-dry-preflop-setup | `src/domain/handProgression.ts:19-26` に `preparePreflopRound` を抽出。`gameSetup.ts:34` と `handProgression.ts:100` から呼び出し、重複排除済み。テスト2件追加（`handProgression.test.ts:52-87`）。ファサード非公開・循環依存なし |
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `new` が1件（ARCH-002-let-to-const）あるため REJECT

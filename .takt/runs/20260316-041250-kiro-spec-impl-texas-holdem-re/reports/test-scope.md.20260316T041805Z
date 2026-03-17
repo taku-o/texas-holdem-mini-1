@@ -1,0 +1,17 @@
+# 変更スコープ宣言
+
+## タスク
+ブラインド・ショートスタック修正（タスク2）のテスト作成: currentBetを実際のBB額に、チップ0プレイヤーのSB/BBスキップ
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/dealing.test.ts` |
+| 変更 | `src/domain/handProgression.test.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- `src/domain/dealing.ts` の `postBlinds` 関数
+- `src/domain/handProgression.ts` の `preparePreflopRound` 関数

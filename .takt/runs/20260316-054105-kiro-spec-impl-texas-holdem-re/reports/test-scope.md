@@ -1,0 +1,16 @@
+# 変更スコープ宣言
+
+## タスク
+CPU のレイズ/ベット額が getValidActions の min/max 範囲内にクランプされることを検証するテスト追加
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/cpuStrategy.test.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- `src/domain/cpuStrategy.ts` — decideAction のベット/レイズ額クランプ動作
+- `src/domain/betting.ts` — getValidActions の min/max 範囲、applyAction のバリデーション

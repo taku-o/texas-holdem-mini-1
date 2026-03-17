@@ -1,0 +1,16 @@
+# 決定ログ
+
+## 1. GameScreen.test.tsxのテスト戦略
+- **背景**: GameScreenは3つの表示モード（未開始・ゲーム中・終了）を切り替えるプレゼンテーションコンポーネント。子コンポーネント（TableView, PlayerSeats, ActionBar）への配線も検証が必要
+- **検討した選択肢**: (A) 子コンポーネントをモックして純粋にprops配線のみテスト (B) 子コンポーネントも実際にレンダリングして統合的にテスト
+- **理由**: (B)を選択。既存テスト（PlayerSeats.test.tsx等）のパターンに合わせ、実際のコンポーネントをレンダリングしてdata-testidやテキスト内容で検証する方式を採用。子コンポーネントのモックは実装詳細に依存するため避けた
+
+## 2. App.test.tsxの拡張方針
+- **背景**: 既存のApp.test.tsxは最小限のスモークテスト2件のみ。useGameController統合後のテスト追加が必要
+- **検討した選択肢**: (A) 既存テストを置き換え (B) 既存テストを維持しつつ新規テストを追加
+- **理由**: (B)を選択。既存の「render without crashing」「display visible content」テストは変更後も有効なので維持し、ゲーム開始フローの統合テストを追加
+
+## 3. インテグレーションテストの要否
+- **背景**: App → useGameController → GameScreen → 子コンポーネントのデータフローが3モジュール以上を横断する
+- **検討した選択肢**: (A) GameScreen単体テストのみ (B) App.test.tsxで統合テストも追加
+- **理由**: (B)を選択。App.test.tsxでの「ゲーム開始ボタン→ゲーム画面表示」フローが、useGameController→GameScreen→PlayerSeatsの統合を検証するインテグレーションテストとして機能する

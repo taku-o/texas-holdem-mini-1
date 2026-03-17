@@ -1,0 +1,31 @@
+# AI生成コードレビュー
+
+## 結果: REJECT
+
+## サマリー
+ロイヤルフラッシュ判定が入力カード全体（5〜7枚）のランクで行われており、7枚入力時にキングハイ・ストレートフラッシュ＋別スートのAを誤ってロイヤルフラッシュと判定するバグがある。
+
+## 検証した項目
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| 仮定の妥当性 | ❌ | ベスト5枚選択の考慮漏れ |
+| API/ライブラリの実在 | ✅ | `rankDescription` は `dist/index.d.ts:33` に実在 |
+| コンテキスト適合 | ✅ | `DESCRIPTION_TO_CATEGORY` はライブラリの `HAND_RANK_DESCRIPTIONS` と完全一致 |
+| スコープ | ✅ | タスク6の範囲内 |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | カテゴリ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | AR-001 | plausible-but-wrong | もっともらしいが間違っている | `src/domain/handEvaluator.ts:63-68` | `cardRanks` が全入力カード（最大7枚）のランクで構成されるため、ベスト5枚がK-Q-J-10-9の同スートSFでも余りカードにAがあると `hasAllRoyalRanks=true` となりロイヤルフラッシュと誤判定される。例: `[K♥,Q♥,J♥,10♥,9♥,A♠,2♦]` → 正しくは `straight-flush` だが `royal-flush` と判定 | `baseCategory === 'straight-flush' && score === 1` のようにスコア値（公開API `evaluateStrings` の戻り値）でロイヤルフラッシュを識別する。`score === 1` はライブラリ内部定数ではなく公開APIの最強ハンドスコアであり、タスク6の目的に反しない |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `AR-001`（new）が1件あるため REJECT

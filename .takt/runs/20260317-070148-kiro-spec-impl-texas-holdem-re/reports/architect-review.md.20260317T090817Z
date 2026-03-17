@@ -1,0 +1,28 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+新規導入された `ValidAction` 型がフラットなオプショナルフィールド設計であり、`bet`/`raise` 時に `min`/`max` が必ず存在するという不変条件が型で表現されていない。結果として消費側で非null断言7箇所・防御的undefinedチェック4箇所を強制している。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-012-01 | cross-field-invariant | スコープ内 | `src/domain/types.ts:39-43` | `ValidAction` の `min`/`max` が常にオプショナル。`type` との不変条件が型で未強制。`cpuStrategy.ts:79,80,110,113,124,127,138` で `!` 断言7箇所、`ActionBar.tsx:37,50,68,76` で `?.xxx !== undefined` チェック4箇所を強制 | 判別共用体に変更: `{ type: 'fold' } \| { type: 'check' } \| { type: 'call' } \| { type: 'bet'; min: number; max: number } \| { type: 'raise'; min: number; max: number }`。影響: `types.ts`, `betting.ts`(getValidActions), `cpuStrategy.ts`, `ActionBar.tsx`, 対応テスト |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## REJECT判定条件
+- `new`: 1件（ARCH-012-01）— 今回新規導入された型の設計問題。修正はスコープ内で完結する

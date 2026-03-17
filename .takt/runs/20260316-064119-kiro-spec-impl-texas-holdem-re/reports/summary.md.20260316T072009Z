@@ -1,0 +1,31 @@
+# タスク完了サマリー
+
+## タスク
+Task 8「CPU連続処理の非同期化」— CPUの連続ターン処理（同期whileループ）がメインスレッドを長時間ブロックする問題を解消し、`setTimeout(0)` による yield と `onProgress` コールバックで状態更新・再描画サイクルが進むようにする。
+
+## 結果
+未完了（REJECT） — タスク本来の目的（async化・yield・onProgress）は達成されているが、AIレビューで指摘された4件のコード品質問題（エラー握りつぶし、説明コメント、未使用変数、二重実行防止欠落）が未修正のため差し戻し。
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/application/gameFlow.ts` | `processCpuTurnsAndPhases`, `handlePlayerAction`, `advanceUntilHumanTurn` を async 化。`yieldToMainThread` ヘルパーと `onProgress` コールバックを追加 |
+| 変更 | `src/application/useGameController.ts` | `startGame`, `handleAction` を async IIFE 化。`gameStateRef`/`processingRef` による状態追跡と二重実行防止を追加 |
+| 変更 | `src/application/gameFlow.test.ts` | 全テストに async/await 対応 |
+| 変更 | `src/application/useGameController.test.ts` | async act + waitFor パターンへの全面修正 |
+| 作成 | `src/application/gameFlow.async.test.ts` | 非同期動作・onProgress・yield 専用テスト |
+
+## 未解決の指摘
+| finding_id | 概要 | ファイル:行 |
+|------------|------|-------------|
+| AIR-001 | `.catch(console.error)` によるエラー握りつぶし（状態復旧なし） | `useGameController.ts:30,53` |
+| AIR-002 | 説明コメント `// Keep gameStateRef in sync with gameState` | `useGameController.ts:68` |
+| AIR-003 | 未使用中間変数 `let state = fullState` | `gameFlow.test.ts:291` |
+| AIR-004 | `startGame` に `processingRef` ガード・`try/finally` が欠落 | `useGameController.ts:20-30` |
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+npx vite build
+```

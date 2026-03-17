@@ -1,0 +1,33 @@
+# タスク完了サマリー
+
+## タスク
+テキサスホールデムWebアプリのタスク4「ゲームエンジンの中核ロジック」（サブタスク4.1〜4.7）を実装。デッキ管理・ゲーム初期化・ブラインド配布・ベッティングラウンド・ショーダウン・ハンド進行・ゲーム終了判定を含むドメインロジック一式を、テスト先行開発で構築した。
+
+## 結果
+完了
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 作成 | `src/domain/deck.ts` | デッキ生成（52枚）・Fisher-Yatesシャッフル |
+| 作成 | `src/domain/gameSetup.ts` | ゲーム初期化（ランダム席決め・チップ付与・ブラインド・配布） |
+| 作成 | `src/domain/dealing.ts` | ブラインドポスト・ホールカード配布・コミュニティカード配布 |
+| 作成 | `src/domain/betting.ts` | ベッティングラウンド（アクション検証・適用・完了判定・次プレイヤー算出） |
+| 作成 | `src/domain/showdown.ts` | ショーダウン（勝者判定・ポット配分・無争ポット解決） |
+| 作成 | `src/domain/handProgression.ts` | フェーズ遷移・ディーラーボタン移動・次ハンド開始・ゲーム終了判定 |
+| 作成 | `src/domain/gameEngine.ts` | パブリックAPIファサード（外部モジュール向け統一エントリポイント） |
+| 作成 | `src/domain/deck.test.ts` | デッキテスト（8テスト） |
+| 作成 | `src/domain/gameSetup.test.ts` | ゲーム初期化テスト（13テスト） |
+| 作成 | `src/domain/dealing.test.ts` | 配布テスト（17テスト） |
+| 作成 | `src/domain/betting.test.ts` | ベッティングテスト（24テスト） |
+| 作成 | `src/domain/showdown.test.ts` | ショーダウンテスト（8テスト） |
+| 作成 | `src/domain/handProgression.test.ts` | ハンド進行テスト（23テスト） |
+| 作成 | `src/domain/gameEngine.integration.test.ts` | インテグレーションテスト（4テスト、チップ保存則検証含む） |
+| 変更 | `src/domain/types.ts` | GameStateに`lastAggressorIndex: number \| null`フィールド追加 |
+| 変更 | `src/domain/types.test.ts` | lastAggressorIndexフィールド追加に伴うテスト更新 |
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+```

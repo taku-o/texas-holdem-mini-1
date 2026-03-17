@@ -1,0 +1,21 @@
+# 変更スコープ宣言
+
+## タスク
+タスク10「結合・動作確認とテスト」の統合テスト・単体テスト追加
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/gameEngine.integration.test.ts` |
+| 変更 | `src/domain/showdown.test.ts` |
+| 変更 | `src/domain/handProgression.test.ts` |
+| 変更 | `src/application/useGameController.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- gameEngine統合テスト（人間勝利シナリオ、bet/raiseを含む複数ハンド）
+- showdown単体テスト（3人以上タイの端数処理）
+- handProgression単体テスト（チップ0プレイヤーのブラインドスキップ）
+- useGameControllerテスト（ゲーム再開フロー）

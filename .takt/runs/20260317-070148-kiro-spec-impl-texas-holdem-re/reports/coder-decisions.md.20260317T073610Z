@@ -1,0 +1,6 @@
+# 決定ログ
+
+## 1. App.test.tsx の既存テスト修正
+- **背景**: タスク12の3つの新規テストファイル（betting.allin.test.ts, cpuStrategy.validation.test.ts, gameEngine.shortstack.integration.test.ts）は全て既存実装で合格していた。しかしフルテストスイート実行時にApp.test.tsxの`should start game when start button is clicked`テストが失敗していた。原因はuseGameControllerのstartGameが非同期処理（async/await + advanceUntilHumanTurn）を使用しているにもかかわらず、テストが同期的にDOM検証を行っていたため。
+- **検討した選択肢**: (1) テストをasync + waitForに修正 (2) 放置して新規テストのみ対応
+- **理由**: 同ファイル内の別テスト（should not show start button during active game）が既にasync + waitForパターンを使用しており、同じパターンに統一するのが正しい修正。テストスイート全体の合格が求められるため修正を実施。

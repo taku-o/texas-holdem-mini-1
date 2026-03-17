@@ -1,0 +1,27 @@
+# 変更スコープ宣言
+
+## タスク
+ゲームエンジン中核ロジック（デッキ・初期化・配布・ベッティング・ショーダウン・ハンド進行・ファサード）の実装
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/types.ts` |
+| 変更 | `src/domain/types.test.ts` |
+| 変更 | `src/domain/deck.test.ts` |
+| 作成 | `src/domain/deck.ts` |
+| 作成 | `src/domain/gameSetup.ts` |
+| 作成 | `src/domain/dealing.ts` |
+| 作成 | `src/domain/betting.ts` |
+| 作成 | `src/domain/showdown.ts` |
+| 作成 | `src/domain/handProgression.ts` |
+| 作成 | `src/domain/gameEngine.ts` |
+
+## 推定規模
+Large
+
+## 影響範囲
+- ドメイン層全体（ゲーム進行ロジック）
+- 既存の `types.ts`（GameState に `lastAggressorIndex` フィールド追加）
+- 既存の `types.test.ts`（GameState オブジェクト7箇所に `lastAggressorIndex: null` 追加）
+- 既存の `deck.test.ts`（再現性テストのシード変数共有バグ修正）

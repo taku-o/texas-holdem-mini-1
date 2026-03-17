@@ -1,0 +1,19 @@
+# タスク完了サマリー
+
+## タスク
+`debug_common.test.ts` のインライン `state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot` パターン（2箇所）を、既存の `calcTotalChips` ヘルパーに置き換える。
+
+## 結果
+完了
+
+## 変更内容
+
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `debug_common.test.ts` | インライン `reduce` パターン2箇所を `calcTotalChips(state)` / `calcTotalChips(result)` に置換、`calcTotalChips` のimportを追加 |
+
+## 確認コマンド
+```bash
+npm test
+npm run build
+```

@@ -1,0 +1,13 @@
+{
+  "task": "/kiro:spec-impl texas-holdem-webapp 9",
+  "piece": "default",
+  "runSlug": "20260315-120529-kiro-spec-impl-texas-holdem-we",
+  "runRoot": ".takt/runs/20260315-120529-kiro-spec-impl-texas-holdem-we",
+  "reportDirectory": ".takt/runs/20260315-120529-kiro-spec-impl-texas-holdem-we/reports",
+  "contextDirectory": ".takt/runs/20260315-120529-kiro-spec-impl-texas-holdem-we/context",
+  "logsDirectory": ".takt/runs/20260315-120529-kiro-spec-impl-texas-holdem-we/logs",
+  "status": "completed",
+  "startTime": "2026-03-15T12:05:29.153Z",
+  "endTime": "2026-03-15T12:23:05.882Z",
+  "iterations": 5
+}

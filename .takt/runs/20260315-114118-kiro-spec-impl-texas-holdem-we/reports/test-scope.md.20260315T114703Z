@@ -1,0 +1,17 @@
+# 変更スコープ宣言
+
+## タスク
+タスク8: 人間用アクションバーの実装（アクションボタン群 + ベット/レイズ時のチップ数入力UI）のテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/ui/ActionBar.test.tsx` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `src/ui/ActionBar.tsx`（未実装、テスト対象）
+- `src/domain/types.ts`（PlayerAction型を使用）
+- `src/domain/constants.ts`（BIG_BLIND定数を使用）

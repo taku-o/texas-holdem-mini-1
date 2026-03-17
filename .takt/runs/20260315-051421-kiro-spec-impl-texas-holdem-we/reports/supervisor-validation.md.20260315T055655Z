@@ -1,0 +1,56 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+タスク指示書（tasks.md タスク4: サブタスク4.1〜4.7）から要件を抽出し、実コードで個別に検証した。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 4.1 | ゲーム開始時に人間プレイヤーの席をランダムに1席決め、全プレイヤーに初期チップを付与した状態を生成する | ✅ | `src/domain/gameSetup.ts:8` — `Math.floor(randomFn() * PLAYER_COUNT)` でランダム席決定、`:14` — `INITIAL_CHIPS` で全員1000チップ付与 |
+| 4.2 | 各ハンドでディーラー左隣をSB・その左をBBとしてブラインドをポストし、各プレイヤーにホールカード2枚を配る | ✅ | `src/domain/dealing.ts:7-8` — SB=dealer+1, BB=dealer+2、`:10-16` — チップ不足時Math.minでオールイン対応、`:29-31` — 各プレイヤーに2枚配布 |
+| 4.3 | ベッティングラウンドでフォールド・チェック・ベット・コール・レイズを受け付け、ルールに沿って検証し状態を更新する（オールインは許容・ポットは単一） | ✅ | `src/domain/betting.ts:3-23` — getValidActionsで5アクション判定、`:25-98` — applyActionで検証+イミュータブル状態更新、`:50-51` — callでMath.minによるオールイン対応 |
+| 4.4 | ショーダウンで役判定を用いて勝者を決め、ポットを配分し、チップが0になったプレイヤーを除外または参加不可とする | ✅ | `src/domain/showdown.ts:14` — evaluate()で手札評価、`:16-22` — 最小スコアが勝者・同スコアは均等分配、`:30-31` — 余りは先頭勝者。チップ0プレイヤーは`betting.ts:124`のgetNextActivePlayerIndexでスキップされ参加不可 |
+| 4.5 | 1ハンド終了後にディーラーボタンを次のプレイヤーに移し、次のハンドを開始する | ✅ | `src/domain/handProgression.ts:54-62` — getNextDealerIndexでチップ>0の次プレイヤーへ移動、`:64-98` — startNextHandでデッキ再生成・ブラインド・配布・UTG設定 |
+| 4.6 | ゲーム終了条件（人間チップ0、CPU全員チップ0）に達したら終了状態に遷移する | ✅ | `src/domain/handProgression.ts:101-117` — isGameOverで人間チップ0（`:105-106`）とCPU全員チップ0（`:109-113`）を判定し理由文字列を返却 |
+| 4.7 | ディーラー業務（カード配布・ボタン移動・ポット集約と配分）が一連の流れで正しく行えるよう組み合わせる | ✅ | `src/domain/gameEngine.ts:1-17` — ファサードとしてsetupNewGame/getValidActions/applyAction/isBettingRoundComplete/evaluateShowdown/determineWinners/resolveUncontestedPot/advancePhase/startNextHand/isGameOver/getActivePlayerCountを再エクスポート |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 11ファイル、160テスト全パス |
+| ビルド | ✅ | TypeScriptエラーなし（tscチェック通過） |
+| TODO/FIXME | ✅ | grep確認: ソースコード中にTODO/FIXME/HACKなし |
+| any型 | ✅ | grep確認: 型としてのany使用なし |
+| スコープクリープ | ✅ | ファイル削除なし。既存変更はtypes.ts（lastAggressorIndex追加）とtypes.test.ts（対応更新）のみで計画どおり |
+| イミュータブル更新 | ✅ | 全関数でスプレッド構文/map使用、引数のstateを直接変更していない |
+| AIレビュー指摘対応 | ✅ | AI-AR-001〜004の全4件が解消済み（ai-review.mdで確認） |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+| finding_id | 解消根拠 |
+|------------|----------|
+| AI-AR-001 | `src/domain/betting.ts:61-62,74-75` — `action.amount === undefined` チェック + throw に修正済み |
+| AI-AR-002 | `src/domain/betting.ts:14-15` — `currentBet > 0` 時に `raise` を選択肢に追加済み |
+| AI-AR-003 | `src/domain/dealing.ts:23` — `postBlinds` で `lastAggressorIndex: bbIndex` を設定。テスト `gameSetup.test.ts` も更新済み |
+| AI-AR-004 | `src/domain/gameEngine.ts` — `getNextActivePlayerIndex` の re-export 削除済み（grep確認: 0件） |
+
+## 成果物
+
+- 作成: `src/domain/deck.ts`, `src/domain/gameSetup.ts`, `src/domain/dealing.ts`, `src/domain/betting.ts`, `src/domain/showdown.ts`, `src/domain/handProgression.ts`, `src/domain/gameEngine.ts`
+- 作成（テスト）: `src/domain/deck.test.ts`, `src/domain/gameSetup.test.ts`, `src/domain/dealing.test.ts`, `src/domain/betting.test.ts`, `src/domain/showdown.test.ts`, `src/domain/handProgression.test.ts`, `src/domain/gameEngine.integration.test.ts`
+- 変更: `src/domain/types.ts`（GameStateにlastAggressorIndex追加）, `src/domain/types.test.ts`（対応テスト更新）
+
+## REJECT判定条件
+
+- `new`、`persists` いずれも0件のため APPROVE

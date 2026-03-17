@@ -1,0 +1,6 @@
+# 決定ログ
+
+## 1. vi.mockによるcreateDeckの呼び出し検証
+- **背景**: `createDeck()`が不要に呼ばれないことを検証するには、関数の呼び出し有無を観測する手段が必要
+- **検討した選択肢**: (A) vi.spyOnでモジュールをスパイ (B) vi.mockでモジュール全体をモック
+- **理由**: `createDeck`はnamed exportであり、vi.mockでファクトリ関数を使って元の実装を維持しつつvi.fnでラップするのが最も確実な方法。vi.spyOnはESモジュールのnamed exportに対して制約がある場合がある

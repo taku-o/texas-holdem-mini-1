@@ -1,0 +1,19 @@
+# タスク完了サマリー
+
+## タスク
+AIレビューで指摘された未使用インポート3件（`ValidAction`, `resolveUncontestedPot`, `SMALL_BLIND`）をテストファイルから削除する。
+
+## 結果
+完了
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/domain/cpuStrategy.validation.test.ts` | 未使用インポート `ValidAction` を削除 |
+| 変更 | `src/domain/gameEngine.shortstack.integration.test.ts` | 未使用インポート `resolveUncontestedPot`, `SMALL_BLIND` を削除 |
+
+## 確認コマンド
+```bash
+npm test
+npm run build
+```

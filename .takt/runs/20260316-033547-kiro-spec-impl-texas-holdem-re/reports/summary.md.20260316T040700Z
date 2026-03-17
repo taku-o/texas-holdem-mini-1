@@ -1,0 +1,31 @@
+# タスク完了サマリー
+
+## タスク
+タスク1（サブタスク1.1〜1.4）— ベッティングのバリデーションとラウンド終了・有効アクション返却の修正。ベット/レイズ額の検証強化、レイズ可否判定、オールインaggressorのラウンド終了判定、getValidActionsのmin/max返却を実装する。
+
+## 結果
+REJECT — 機能要件はすべて充足しているが、AIレビュー指摘（AIR-001: `src/domain/betting.ts:38-44` の `isTypeFeasible` バイパス）が未対応のため差し戻し。
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/domain/betting.ts` | getValidActionsにチップベースのbet/raise可否判定・min/max返却を追加、applyActionにamountバリデーション追加、isBettingRoundCompleteにオールインaggressor対応追加 |
+| 変更 | `src/domain/types.ts` | ValidAction型（type, min?, max?）を追加 |
+| 変更 | `src/domain/gameEngine.ts` | ValidActionのimport追加 |
+| 変更 | `src/application/useGameController.ts` | PlayerAction[] → ValidAction[] の型変更 |
+| 変更 | `src/ui/ActionBar.tsx` | ValidAction型の利用に変更 |
+| 変更 | `src/ui/ActionBar.test.tsx` | ValidAction型に合わせたテスト更新 |
+| 変更 | `src/ui/GameScreen.tsx` | ValidAction型の利用に変更 |
+| 変更 | `src/ui/GameScreen.test.tsx` | ValidAction型に合わせたテスト更新 |
+| 作成 | `src/domain/betting-validation.test.ts` | バリデーション・可否判定・min/max・ラウンド終了の23テストケース |
+
+## 未解決項目
+| finding_id | 問題 | 必要アクション |
+|------------|------|----------------|
+| AIR-001 | `src/domain/betting.ts:38-44` — プロダクション到達不能な `isTypeFeasible` バイパス（今回の変更で導入されたデッドコード） | 選択肢A: バイパス削除＋対応テスト削除、または選択肢B: getValidActionsでオールインをモデル化しバイパスを不要にする |
+
+## 確認コマンド
+```bash
+npx vitest run
+npm run build
+```

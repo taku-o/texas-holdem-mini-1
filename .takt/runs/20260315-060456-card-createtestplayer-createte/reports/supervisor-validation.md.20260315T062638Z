@@ -1,0 +1,52 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書: 「テストヘルパーの重複（card, createTestPlayer, createTestState等）を修正」
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | `card` 関数の重複を共通ヘルパーに集約 | ✅ | `src/domain/testHelpers.ts:3-6` に定義。5テストファイルすべてで `import { card } from './testHelpers'` に置換済み。テストファイル内にローカル `card` 定義は残存なし（grep確認） |
+| 2 | `createTestPlayer` 関数の重複を共通ヘルパーに集約 | ✅ | `src/domain/testHelpers.ts:16-26` に定義。`betting.test.ts:10`, `handProgression.test.ts:11`, `dealing.test.ts:5`, `showdown.test.ts:8` でインポート済み。各ファイルのローカルラッパーは共通関数への委譲のみ（計画通り） |
+| 3 | `createTestState` 関数の重複を共通ヘルパーに集約 | ✅ | `src/domain/testHelpers.ts:28-44` に定義。`betting.test.ts:10`, `handProgression.test.ts:11`, `dealing.test.ts:5`, `showdown.test.ts:8` でインポート済み。各ファイルのローカルラッパーはテスト固有のデフォルト値を設定するのみ |
+| 4 | `createSimpleDeck` 関数の重複を共通ヘルパーに集約 | ✅ | `src/domain/testHelpers.ts:8-14` に定義。テストファイル内にローカル `createSimpleDeck` 定義は残存なし（grep確認） |
+| 5 | 既存テストが引き続き動作する | ✅ | `vitest run` → 12ファイル 188テスト全パス |
+| 6 | AIレビュー指摘: `handEvaluator.test.ts` の `Card` 型インポート修正 | ❌ | `src/domain/handEvaluator.test.ts:10` で `const cards: Card[] = [` を使用しているが、`Card` 型のインポートが存在しない。git diff で確認: 元コードにあった `import type { Card } from './types'` がローカル `card` 関数削除時に一緒に削除されたリグレッション |
+| 7 | AIレビュー指摘: `showdown.test.ts` の `Card` 型インポート修正 | ❌ | `src/domain/showdown.test.ts:7` で `import type { GameState, Player } from './types'` に `Card` が含まれていない。40行目・72行目・101行目で `const communityCards: Card[] = [` を使用 |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `vitest run` (12 files, 188 passed) |
+| ビルド | ✅ | `tsc -b` 成功（テストファイルは `tsconfig.app.json` で除外されるため型エラーが顕在化しない） |
+| ヘルパー集約 | ✅ | grep確認: テストファイルにローカル `card`/`createSimpleDeck` 定義なし |
+| AIレビュー対応 | ❌ | 2件のブロッキング指摘（Card型インポート欠落）が未修正 |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | 前回根拠 | 今回根拠 | 理由 | 必要アクション |
+|---|------------|----------|----------|------|----------------|
+| 1 | AI-MISSING-CARD-IMPORT-HAND-EVAL | `src/domain/handEvaluator.test.ts:10` 他28箇所（AIレビュー） | `src/domain/handEvaluator.test.ts:10` — `const cards: Card[] = [` で `Card` 未定義。インポート文（1-3行目）に `Card` なし | **リグレッション**: git diff で確認、元コードの `import type { Card } from './types'` がローカル `card` 関数削除と同時に除去された。`Card[]` 型注釈28箇所が参照する型が未インポートのまま | `import type { Card } from './types'` を3行目の後に追加 |
+| 2 | AI-MISSING-CARD-IMPORT-SHOWDOWN | `src/domain/showdown.test.ts:40,72,101`（AIレビュー） | `src/domain/showdown.test.ts:7` — `import type { GameState, Player } from './types'` に `Card` が欠落。40行目 `const communityCards: Card[] = [` で使用 | 新規ファイルで `Card[]` 型注釈を3箇所使用しているが `Card` のインポートがない | 7行目を `import type { Card, GameState, Player } from './types'` に変更 |
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 作成: `src/domain/testHelpers.ts`, `src/domain/testHelpers.test.ts`
+- 変更: `src/domain/handEvaluator.test.ts`, `src/domain/betting.test.ts`, `src/domain/dealing.test.ts`, `src/domain/handProgression.test.ts`, `src/domain/showdown.test.ts`
+
+## REJECT判定条件
+
+- `persists` が2件あるため REJECT
+- AIレビューで検出された `Card` 型インポート欠落（finding_id: `AI-MISSING-CARD-IMPORT-HAND-EVAL`, `AI-MISSING-CARD-IMPORT-SHOWDOWN`）が修正されていない
+- `handEvaluator.test.ts` は元コードにあったインポートが削除されたリグレッションであり、このタスクで導入された問題

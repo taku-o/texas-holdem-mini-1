@@ -1,0 +1,19 @@
+# 変更スコープ宣言
+
+## タスク
+CPU連続処理の非同期化（handlePlayerAction, advanceUntilHumanTurn を async 化し、yieldToMainThread と onProgress コールバックを追加）
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/application/gameFlow.ts` |
+| 変更 | `src/application/useGameController.ts` |
+| 変更 | `src/application/gameFlow.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- gameFlow モジュール（processCpuTurnsAndPhases, handlePlayerAction, advanceUntilHumanTurn）
+- useGameController（startGame, handleAction の async 化）
+- gameFlow.test.ts（全呼び出しに await 追加）

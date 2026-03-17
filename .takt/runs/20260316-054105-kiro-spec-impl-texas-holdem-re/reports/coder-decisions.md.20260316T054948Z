@@ -1,0 +1,8 @@
+# 決定ログ
+
+## 1. clampToValidRange関数の導入方法
+- **背景**: calculateBetAmountの戻り値がgetValidActionsのmin/max範囲外になるケースがあり、applyActionでエラーが発生していた
+- **検討した選択肢**:
+  1. calculateBetAmount自体にValidActionのmin/maxを渡す
+  2. decideAction内でamount使用時にクランプする専用関数を追加
+- **理由**: calculateBetAmountはチップ量・ハンド強度に基づく純粋な計算関数であり、ValidActionの構造に依存させるべきでない。クランプはアクション選択のコンテキストで行うのが適切なため、別関数clampToValidRangeを導入した

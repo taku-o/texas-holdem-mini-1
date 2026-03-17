@@ -1,0 +1,30 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | 32行目の `reduce` パターンを `calcTotalChips(state)` に置換 | ✅ | `debug_common.test.ts:32` — `const initialTotal = calcTotalChips(state)` |
+| 2 | 39行目の `reduce` パターンを `calcTotalChips(result)` に置換 | ✅ | `debug_common.test.ts:38` — `const resultTotal = calcTotalChips(result)` |
+| 3 | `calcTotalChips` を `src/domain/testHelpers` からインポート | ✅ | `debug_common.test.ts:12` — `import { calcTotalChips } from './src/domain/testHelpers'` |
+| 4 | 126/136/142行目の `reduce` パターンは置換対象外 | ✅ | `debug_common.test.ts:125,135,141` — `+ state.pot` なしの `reduce` がそのまま残存 |
+| 5 | 既存テストが全てパスすること | ✅ | 全23ファイル・382テストパス |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 382 passed, 0 failed |
+| ビルド | ✅ | `npm run build` 成功 |
+| 対象テスト | ✅ | `npx vitest run debug_common.test.ts` — 19 passed |
+| スコープクリープ | ✅ | 削除ファイルなし、タスク範囲内の変更のみ |
+
+## 成果物
+
+- 変更: `debug_common.test.ts` — インライン `reduce` パターン2箇所を `calcTotalChips` ヘルパー呼び出しに置換、import追加
+
+## 未完了項目
+
+なし

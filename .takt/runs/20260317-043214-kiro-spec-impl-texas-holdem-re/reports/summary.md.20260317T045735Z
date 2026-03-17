@@ -1,0 +1,26 @@
+# タスク完了サマリー
+
+## タスク
+タスク11「チップ額入力のクライアント側バリデーションとアクセシビリティ」の実装。ベット/レイズのmin/max範囲バリデーション、スライダー/数値入力のaria-label付与、カード裏面のアクセシビリティ対応。
+
+## 結果
+REJECT — ビルドエラー未解消のため差し戻し
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/ui/ActionBar.tsx` | `isChipAmountValid()` バリデーション関数追加、Confirmボタンのdisabled制御、スライダー/数値入力のaria-label付与 |
+| 変更 | `src/ui/CardView.tsx` | カード裏面に `role="img"` と `aria-label="Card back"` 追加 |
+| 変更 | `src/ui/ActionBar.test.tsx` | 11.1（バリデーション6テスト）、11.2（アクセシビリティ5テスト）追加 |
+| 変更 | `src/ui/CardView.test.tsx` | 11.3（裏面アクセシビリティ4テスト）追加 |
+
+## 未解消の問題
+| finding_id | ファイル | 問題 | 修正案 |
+|------------|---------|------|--------|
+| SUP-001-ActionBar-L35-TS2345 | `src/ui/ActionBar.tsx:35` | `setChipInputMode(actionType)` で TS2345 ビルドエラー。`ActionType` を `'bet' \| 'raise' \| null` に代入 | `const CHIP_INPUT_ACTIONS = ['bet', 'raise'] as const` に変更し型絞り込みを有効化 |
+
+## 確認コマンド
+```bash
+npx vitest run
+npm run build
+```

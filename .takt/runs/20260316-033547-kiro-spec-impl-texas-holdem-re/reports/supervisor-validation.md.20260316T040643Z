@@ -1,0 +1,50 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書（tasks.md タスク1、サブタスク1.1〜1.4）から要件を抽出し、各要件を実コードで個別に検証した。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1.1a | ベット額がプレイヤー所持チップ以下であることを検証し、違反時エラー | ✅ | `src/domain/betting.ts:77-78`（bet超過throw）, `src/domain/betting.ts:97-98`（raise超過throw） |
+| 1.1b | レイズ額が最低レイズ額以上かつルール上有効な範囲であることを検証し、違反時エラー | ✅ | `src/domain/betting.ts:80-82`（bet最低額throw）, `src/domain/betting.ts:100-103`（raise最低額throw） |
+| 1.2 | レイズ可否条件に「コール額＋最低レイズ額を支払えるか」を追加、支払えない場合はレイズを有効にしない | ✅ | `src/domain/betting.ts:20-27`（`minRaiseCost` 計算、`player.chips >= minRaiseCost` でフィルタ） |
+| 1.3 | last aggressorがオールインでアクティブでない場合でも正しくラウンド終了する（無限ループ防止） | ✅ | `src/domain/betting.ts:129-135`（aggressor chips>0条件追加）, `src/domain/betting.ts:137-139`（全員マッチのフォールバック条件） |
+| 1.4 | 有効アクション取得時にベット/レイズの選択可能な額の範囲（min/max）を返す | ✅ | `src/domain/betting.ts:14`（bet min/max）, `src/domain/betting.ts:25`（raise min/max）, `src/domain/types.ts:39-43`（ValidAction型定義） |
+
+全機能要件は充足している。ただし、以下のブロッキング問題が存在する。
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 406 passed (24 files) |
+| ビルド | ✅ | `npm run build` — 成功（67 modules, 629ms） |
+| 要件充足 | ✅ | 5要件すべて機能的に充足 |
+| AIレビュー指摘対応 | ❌ | AIR-001 未解決 |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | 前回根拠 | 今回根拠 | 理由 | 必要アクション |
+|---|------------|----------|----------|------|----------------|
+| 1 | AIR-001 | `src/domain/betting.ts:38-44`（AIレビュー指摘） | `src/domain/betting.ts:38-44`（現在も同一コードが存在） | AIレビューが REJECT した `isTypeFeasible` バイパスが未対応のまま残存。`git diff HEAD -- src/domain/betting.ts` で確認：元コードは `throw new Error('Invalid action: ...')` の単純throw だったが、今回の変更で `isTypeFeasible` バイパスが追加された（diff +39〜+44）。`applyAction` の全プロダクション呼び出し元（`gameFlow.ts:97` CPU経由、`gameFlow.ts:108` Human経由）はいずれも `getValidActions` でフィルタ済みのため、このバイパスはプロダクションで到達不能。レビューポリシーの REJECT 基準「未使用コード（念のためのコード）」および「今回の変更で導入された問題」に該当する。対応テスト（`betting-validation.test.ts:323-347`, `415-437`）もこの到達不能パスを経由している | AIレビューの修正案いずれかで対応が必要。**選択肢A（シンプル）**: `isTypeFeasible` バイパスを削除し元の厳格な throw に戻す。対応テスト2件も削除。**選択肢B（ドメイン正確性維持）**: `getValidActions` でオールインをモデル化（例: `chips < BIG_BLIND` でも `chips > 0` なら `{ type: 'bet', min: chips, max: chips }` を返す）し、バイパスを不要にする |
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 作成: `src/domain/betting-validation.test.ts`
+- 変更: `src/domain/betting.ts`, `src/domain/types.ts`, `src/domain/gameEngine.ts`, `src/application/useGameController.ts`, `src/ui/ActionBar.tsx`, `src/ui/ActionBar.test.tsx`, `src/ui/GameScreen.tsx`, `src/ui/GameScreen.test.tsx`
+
+## REJECT判定条件
+
+- `AIR-001`（persists）が1件存在するため REJECT
+- 全機能要件は充足しているが、AIレビューの REJECT 指摘が未対応であり、レビューポリシーの「未使用コード」基準に抵触するデッドコードがこの変更で導入されたまま残存している

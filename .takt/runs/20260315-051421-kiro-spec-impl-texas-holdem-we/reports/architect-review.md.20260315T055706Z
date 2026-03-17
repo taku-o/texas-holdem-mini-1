@@ -1,0 +1,31 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+全体的に高品質な設計（責務分割・ファサード・イミュータブル更新・循環依存なし）だが、`gameSetup.ts` と `handProgression.ts` にプリフロップ準備シーケンスの5行重複（本質的に同一ロジック）が検出され、DRY違反としてREJECT。
+
+## 確認した観点
+- [x] 構造・設計（全ファイル200行以内、1ファイル1責務、循環依存なし）
+- [x] コード品質（any型なし、TODOなし、説明コメントなし、空catchなし）
+- [x] 変更スコープ（Large: 実装568行+テスト3,005行。論理的にまとまっており分割不要）
+- [x] テストカバレッジ（全関数にテストあり、イミュータビリティ検証・統合テストも網羅）
+- [x] デッドコード（未使用エクスポート・未使用importなし）
+- [x] 呼び出しチェーン検証（ファサード経由の公開API適切、内部関数は非公開）
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-dry-preflop-setup | dry-violation | スコープ内 | `src/domain/gameSetup.ts:35-40`, `src/domain/handProgression.ts:91-96` | 「postBlinds→dealHoleCards→BB index計算→UTG計算→currentPlayerIndex設定」の5行が2箇所で本質的に同一ロジックとして重複。変更理由も同一（例: アンテ追加時に両方修正が必要） | `dealing.ts`に`preparePreflopRound(state: GameState): GameState`を抽出し、両箇所から呼び出す。dealing→bettingの依存追加が不可なら、`handProgression.ts`内に関数を定義し`gameSetup.ts`からインポートする構成でもよい |
+
+## 継続指摘（persists）
+なし（初回レビュー）
+
+## 解消済み（resolved）
+なし（初回レビュー）
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `new` が1件（ARCH-001-dry-preflop-setup）あるため REJECT

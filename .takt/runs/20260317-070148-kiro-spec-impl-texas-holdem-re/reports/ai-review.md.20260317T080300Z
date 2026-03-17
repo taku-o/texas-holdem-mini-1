@@ -1,0 +1,36 @@
+# AI生成コードレビュー
+
+## 結果: REJECT
+
+## サマリー
+新規テストファイル3件に未使用インポートが計3箇所あり、AI典型の「まとめてインポートして使わない」パターンに該当するためREJECT。
+
+## 検証した項目
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| 仮定の妥当性 | ✅ | タスク12要件に適合した結合・単体テスト |
+| API/ライブラリの実在 | ✅ | 全インポート先のエクスポートを grep で確認済み |
+| コンテキスト適合 | ✅ | Given/When/Then スタイル、Vitest、createTestState パターンに準拠 |
+| スコープ | ✅ | タスク12.1〜12.3の要件をカバー、過剰な追加なし |
+| 配線忘れ | ✅ | ActionBar→ChipInput の mode/isValid プロパティは正しく接続 |
+| フォールバック濫用 | ✅ | 新規コードに不適切なフォールバックなし |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | カテゴリ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | AIR-012-01 | unused-import | 未使用コード | `src/domain/cpuStrategy.validation.test.ts:5` | `ValidAction` 型がインポートされているがファイル内で未使用 | `import type { GameState } from './types'` に変更 |
+| 2 | AIR-012-02 | unused-import | 未使用コード | `src/domain/gameEngine.shortstack.integration.test.ts:5` | `resolveUncontestedPot` がインポートされているがファイル内で未使用 | `import { evaluateShowdown } from './showdown'` に変更 |
+| 3 | AIR-012-03 | unused-import | 未使用コード | `src/domain/gameEngine.shortstack.integration.test.ts:6` | `SMALL_BLIND` がインポートされているがファイル内で未使用 | `import { INITIAL_CHIPS, PLAYER_COUNT, BIG_BLIND } from './constants'` に変更 |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `new` が3件（AIR-012-01, AIR-012-02, AIR-012-03）あるためREJECT
+- いずれも未使用インポートの削除のみで修正可能（各1行の変更）

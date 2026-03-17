@@ -1,0 +1,15 @@
+# 変更スコープ宣言
+
+## タスク
+ショーダウン時のポット配分の防御的アサーション追加に対するテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/showdown.test.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- `src/domain/showdown.ts` の `evaluateShowdown` / `resolveUncontestedPot`

@@ -1,0 +1,17 @@
+# 変更スコープ宣言
+
+## タスク
+ゲーム用データ型（Card, Player, GameState等）と定数（INITIAL_CHIPS等）の定義に対するテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/domain/types.test.ts` |
+| 作成 | `src/domain/constants.test.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- `src/domain/types.ts`（未作成、テスト対象）
+- `src/domain/constants.ts`（未作成、テスト対象）

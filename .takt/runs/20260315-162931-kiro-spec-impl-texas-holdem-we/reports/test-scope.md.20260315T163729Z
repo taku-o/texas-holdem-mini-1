@@ -1,0 +1,21 @@
+# 変更スコープ宣言
+
+## タスク
+タスク10: 結合・動作確認とテスト — 不足しているテストケースの追加
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 編集 | `src/application/useGameController.test.ts` |
+| 編集 | `src/domain/gameEngine.integration.test.ts` |
+| 編集 | `src/domain/handProgression.test.ts` |
+| 編集 | `src/domain/cpuStrategy.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- useGameController（複数ハンド混合アクション、CPU全員脱落テスト追加）
+- gameEngine結合テスト（ショーダウン後ポット配分検証、facadeエクスポート検証）
+- handProgression（advancePhaseのエラーハンドリングテスト）
+- cpuStrategy（bet/raiseのamount有効範囲検証）

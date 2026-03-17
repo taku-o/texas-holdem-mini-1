@@ -1,0 +1,13 @@
+{
+  "task": "/kiro:spec-impl texas-holdem-review-fixes-1 3",
+  "piece": "default",
+  "runSlug": "20260317-134702-kiro-spec-impl-texas-holdem-re",
+  "runRoot": ".takt/runs/20260317-134702-kiro-spec-impl-texas-holdem-re",
+  "reportDirectory": ".takt/runs/20260317-134702-kiro-spec-impl-texas-holdem-re/reports",
+  "contextDirectory": ".takt/runs/20260317-134702-kiro-spec-impl-texas-holdem-re/context",
+  "logsDirectory": ".takt/runs/20260317-134702-kiro-spec-impl-texas-holdem-re/logs",
+  "status": "completed",
+  "startTime": "2026-03-17T13:47:02.768Z",
+  "endTime": "2026-03-17T14:04:53.563Z",
+  "iterations": 5
+}

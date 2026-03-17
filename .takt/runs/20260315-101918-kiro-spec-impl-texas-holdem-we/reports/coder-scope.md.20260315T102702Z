@@ -1,0 +1,16 @@
+# 変更スコープ宣言
+
+## タスク
+useGameControllerカスタムフック（タスク6.1, 6.2, 6.3）の実装
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/application/useGameController.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- application層（useGameController）
+- gameFlow, gameSetup, betting を利用

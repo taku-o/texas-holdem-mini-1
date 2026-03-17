@@ -1,0 +1,13 @@
+{
+  "task": "# タスク指示書: レビュー指摘事項対応 — コード重複の解消\n\n## 概要\nレビューで指摘された5件のコード重複を、共通関数・ヘルパーの抽出により解消する。\n\n## 参照資料\n- `debug_game.ts`\n- `debug_game2.ts`\n- `debug_game3.ts`\n- `src/domain/gameEngine.integration.test.ts`\n- `src/application/useGameController.test.ts`\n- `src/application/gameFlow.test.ts`（チップ保存則パターンの使用箇所）\n\n---\n\n## 作業内容\n\n### 1. debug_game.ts / debug_game2.ts / debug_game3.ts — 共通構造の抽出（高）\n\n3つのデバッグスクリプトはほぼ同じ構造（ゲームセットアップ、アクションループ、ガードカウンター）を持ち、わずかな違い（乱数関数、アクション選択ロジック）だけが異なる。\n\n**やること:**\n- 3ファイルの共通構造を調査し、差分（乱数関数、アクション選択ロジック）を特定する\n- 共通部分を共有モジュール（例: `debug_common.ts`）に抽出する\n- 差分部分はパラメータまたはコールバックとして注入できる設計にする\n- 3つのデバッグスクリプトは共有モジュールを利用する形にリファクタリングする\n\n### 2. gameEngine.integration.test.ts — facadeエクスポートテストの重複解消（中）\n\nexpectedExports配列が2つのテストで同一内容で定義されている（配列とSetの違いのみ）。\n\n**やること:**\n- 重複している `expectedExports` を1箇所で定義する共通定数に抽出する\n- 2つのテストから共通定数を参照するように変更する\n\n### 3. gameEngine.integration.test.ts — ベッティングラウンドループのコピペ解消（中）\n\n`preserve chip conservation across each phase` テストで、同じベッティングラウンド処理がフロップ・ターン・リバーで3回コピペされている。\n\n**やること:**\n- ベッティングラウンド処理をヘルパー関数に抽出する\n- フロップ・ターン・リバーの3箇所をヘルパー関数の呼び出しに置き換える\n\n### 4. useGameController.test.ts — ゲーム終了待ちループの重複解消（中）\n\n`while (result.current.gameState?.phase !== 'idle' && iterations < maxIterations)` パターンが3箇所でほぼ同一。\n\n**やること:**\n- ゲーム終了待ちループをヘルパー関数（例: `waitForGameEnd`）に抽出する\n- 3箇所をヘルパー関数の呼び出しに置き換える\n\n### 5. チップ保存則チェックの繰り返し解消（低）\n\n`current.players.reduce((sum, p) => sum + p.chips, 0) + current.pot` が15箇所以上で繰り返されている。\n\n**やること:**\n- `gameEngine.integration.test.ts`、`gameFlow.test.ts` 等の該当テストファイルを調査し、全使用箇所を特定する\n- チップ保存則チェックをヘルパー関数（例: `calcTotalChips(state)` ）に抽出する\n- テストファイル内のヘルパー関数または共有テストユーティリティとして配置する\n- 全使用箇所をヘルパー関数の呼び出しに置き換える\n\n---\n\n## 確認方法\n- 全既存テストがパスすること\n- ビルド（型チェック）がエラーなく通ること\n- デバッグスクリプト（`debug_game.ts`, `debug_game2.ts`, `debug_game3.ts`）が変更前と同じ動作をすること",
+  "piece": "default",
+  "runSlug": "20260315-170150-5",
+  "runRoot": ".takt/runs/20260315-170150-5",
+  "reportDirectory": ".takt/runs/20260315-170150-5/reports",
+  "contextDirectory": ".takt/runs/20260315-170150-5/context",
+  "logsDirectory": ".takt/runs/20260315-170150-5/logs",
+  "status": "completed",
+  "startTime": "2026-03-15T17:01:50.594Z",
+  "endTime": "2026-03-15T17:32:43.043Z",
+  "iterations": 7
+}

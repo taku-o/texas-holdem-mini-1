@@ -1,0 +1,11 @@
+# 決定ログ
+
+## 1. CPU全員脱落テストでは終了理由の文字列を厳密にマッチさせない
+- **背景**: 計画では `gameOverReason` が 'All CPU players eliminated' を含むことを検証する案だったが、ゲーム終了の原因は人間チップ0の場合もある
+- **検討した選択肢**: (A) 文字列の完全一致検証 (B) `toBeDefined()` で存在のみ検証
+- **理由**: `fixedRandom` による決定論的挙動でも、ゲーム終了理由は実行パスに依存するため、振る舞い（ゲーム終了すること）の検証を優先し、テストの脆さを回避した
+
+## 2. facade エクスポート検証はdynamic importで実施
+- **背景**: `gameEngine.ts` のエクスポート一覧が正しいことを検証する方法として、static import vs dynamic import の選択があった
+- **検討した選択肢**: (A) static importで各関数をimportして検証 (B) dynamic importでモジュールオブジェクトを検証
+- **理由**: dynamic importによりエクスポートの過不足を一括で検証でき、将来のリファクタリング時の安全ネットとして有効

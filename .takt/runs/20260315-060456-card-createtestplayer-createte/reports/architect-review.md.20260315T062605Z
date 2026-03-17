@@ -1,0 +1,32 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`testHelpers.ts` の `createSimpleDeck()` が `deck.ts` の `createDeck()` と本質的に同一のロジックを再実装しており DRY 違反。加えて、前回 AI レビューで指摘された型インポート欠落2件が未解消。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | DUPLICATE_CREATE_SIMPLE_DECK | dry-violation | スコープ内 | `src/domain/testHelpers.ts:8-14` | `createSimpleDeck()` は `deck.ts:8-10` の `createDeck()` と同一ロジックの再実装（4スート×13ランク=52枚の `Card[]` 生成）。テストヘルパーの責務はテストデータの組み立てであり、デッキ生成ロジックの再実装ではない | `createDeck` を `deck.ts` からインポートして使用。`createSimpleDeck` のエクスポートを削除し、`createTestState` 内で `createDeck()` を直接使用。`testHelpers.test.ts:39-91` の `createSimpleDeck` テストも `createDeck` のテスト（`deck.test.ts`）と重複するため削除 |
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | MISSING_CARD_TYPE_IMPORT_HAND_EVALUATOR | missing-import | `handEvaluator.test.ts:10` で `Card[]` 使用 | `handEvaluator.test.ts:3` に `Card` インポートなし、10行目で未定義型 `Card[]` を参照 | `Card` 型インポート欠落（全28箇所で使用） | 3行目の後に `import type { Card } from './types'` を追加 |
+| 2 | MISSING_CARD_TYPE_IMPORT_SHOWDOWN | missing-import | `showdown.test.ts:40` で `Card[]` 使用 | `showdown.test.ts:7` のインポートに `Card` なし、40行目で未定義型 `Card[]` を参照 | `Card` 型インポート欠落（3箇所で使用） | 7行目を `import type { Card, GameState, Player } from './types'` に変更 |
+
+## 解消済み（resolved）
+
+該当なし
+
+## REJECT判定条件
+- `new` 1件（`DUPLICATE_CREATE_SIMPLE_DECK`）、`persists` 2件（`MISSING_CARD_TYPE_IMPORT_*`）

@@ -1,0 +1,47 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | 8.1: 人間のターン時にチェック・ベット・コール・レイズ・フォールドを選択できるUIを表示する | ✅ | `src/ui/ActionBar.tsx:14-16` — `IMMEDIATE_ACTIONS`と`CHIP_INPUT_ACTIONS`で5アクション定義、`:87-95`で全ボタンをmap表示。テスト`ActionBar.test.tsx`の8.1セクション（5テスト）で各ボタンの表示とクリック時の`onAction`呼び出しを検証済み |
+| 2 | 8.2: ベット・レイズ選択時にチップ数を指定する手段（スライダー・入力欄・クイックベット）を提供する | ✅ | `src/ui/ActionBar.tsx:109-134` — `ChipInput`コンポーネントにrange input（スライダー）、number input（数値入力欄）、All-inボタン（クイックベット）を実装。`:33-48`でbet/raiseクリック時にchipInputModeをセットして表示。テスト8.2セクション（12テスト）でスライダー表示、数値入力同期、Confirm/Cancel動作、All-in、デフォルト値、境界値を検証済み |
+| 3 | 8.3: ルール上選択可能なアクションのみを有効にし、選択できないアクションは無効化する | ✅ | `src/ui/ActionBar.tsx:30` — `validActionTypes`にSetで有効アクションを保持、`:91`で`disabled={!validActionTypes.has(actionType)}`でHTML disabled属性を制御。テスト8.3セクション（3テスト）で無効ボタンのdisabled状態と、無効ボタンクリック時にonActionが呼ばれないことを検証済み |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npm test` — 20ファイル 313テスト全パス（既存289 + 新規24） |
+| ビルド | ✅ | `npm run build` — tsc -b + vite build 成功 |
+| リグレッション | ✅ | 既存テスト全パス、削除ファイルなし |
+| スコープクリープ | ✅ | 削除ファイルなし。変更は計画通りの5ファイルのみ |
+
+## レポート整合性チェック
+
+| レポート | 状態 | 未対応指摘 |
+|---------|------|----------|
+| plan.md | ✅ | なし — 計画通りの実装 |
+| ai-review.md | ✅ APPROVE | ブロッキング指摘なし |
+| coder-decisions.md | ✅ | 3件の判断（jest-dom導入、全ボタン常時表示、ChipInput分離）いずれも妥当 |
+| test-decisions.md | ✅ | なし |
+| coder-scope.md / test-scope.md | ✅ | 計画スコープからの逸脱なし |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 作成: `src/ui/ActionBar.tsx`, `src/ui/ActionBar.test.tsx`, `src/test-setup.ts`
+- 変更: `package.json` (@testing-library/jest-dom追加), `vite.config.ts` (setupFiles追加)

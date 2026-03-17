@@ -1,0 +1,29 @@
+# タスク完了サマリー
+
+## タスク
+Task 8「CPU連続処理の非同期化」— CPUの連続ターン処理がメインスレッドを長時間ブロックする問題を解消し、`setTimeout(0)` による yield と `onProgress` コールバックで状態更新・再描画サイクルが進むようにする。
+
+## 結果
+未完了（REJECT） — タスク本来の目的（async化・yield・onProgress）は達成済み。前回指摘の AIR-001〜AIR-004 は解消されたが、AIR-001 の修正で `throw e` が async IIFE 内に残り unhandled promise rejection が発生（`npx vitest run src/App.test.tsx` が exit code 1）。`handleAction` もエラーハンドリング欠落。
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 変更 | `src/application/gameFlow.ts` | `processCpuTurnsAndPhases`, `handlePlayerAction`, `advanceUntilHumanTurn` を async 化。`yieldToMainThread` ヘルパーと `onProgress` コールバックを追加 |
+| 変更 | `src/application/useGameController.ts` | `startGame`, `handleAction` を async IIFE 化。`gameStateRef`/`processingRef` 追加。エラーハンドリング改善（不完全: `throw e` が残存） |
+| 変更 | `src/application/gameFlow.test.ts` | 全テストに async/await 対応。未使用変数 `let state = fullState` 削除 |
+| 変更 | `src/application/useGameController.test.ts` | async act + waitFor パターンへの全面修正。二重実行防止テスト追加 |
+| 作成 | `src/application/gameFlow.async.test.ts` | 非同期動作・onProgress・yield 専用テスト |
+
+## 未解決の指摘
+| finding_id | 概要 | ファイル:行 |
+|------------|------|-------------|
+| VAL-001 | `startGame` の `throw e` が unhandled promise rejection を生成し CI を破壊 | `useGameController.ts:36` |
+| VAL-002 | `handleAction` の async IIFE に `catch` ブロックがなくエラー記録・状態復旧が欠落 | `useGameController.ts:50-63` |
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+npx vite build
+```

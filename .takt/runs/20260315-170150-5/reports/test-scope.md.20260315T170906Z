@@ -1,0 +1,19 @@
+# 変更スコープ宣言
+
+## タスク
+レビュー指摘5件のコード重複解消に対応するテスト作成（新規ヘルパー関数のテスト + 既存テストのリファクタリング対応確認）
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `debug_common.test.ts` |
+| 作成 | `src/domain/testHelpers.calcTotalChips.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `debug_common.ts`（新規作成予定のデバッグ共通モジュール）
+- `src/domain/testHelpers.ts`（`calcTotalChips` 関数追加予定）
+- `src/domain/gameEngine.integration.test.ts`（既存テストの重複解消リファクタリング）
+- `src/application/useGameController.test.ts`（既存テストの重複解消リファクタリング）

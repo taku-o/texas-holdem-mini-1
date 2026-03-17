@@ -1,0 +1,32 @@
+# AI生成コードレビュー
+
+## 結果: REJECT
+
+## サマリー
+`evaluateShowdown` と `resolveUncontestedPot` に追加された `newChips < 0` の防御コードは、勝者のチップにポットを加算する処理であり論理的に到達不能な「念のため」コードである。
+
+## 検証した項目
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| 仮定の妥当性 | ✅ | 単一ポット前提の仕様理解は正確 |
+| API/ライブラリの実在 | ✅ | 使用API全て実在 |
+| コンテキスト適合 | ✅ | 既存パターン（map+スプレッド）を踏襲 |
+| スコープ | ✅ | タスク3.1の要件範囲内 |
+| デッドコード | ❌ | 到達不能な防御コードあり |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | カテゴリ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | AI-001-showdown-dead-guard | dead-code | 到達不能な防御コード | `src/domain/showdown.ts:40-44, 58-62` | 勝者の `newChips = p.chips + share + extra` は全項が非負のため結果は必ず非負。`if (newChips < 0) throw` は到達不能な「念のため」コード。テストも書けない新しい振る舞いでもある | 両箇所の `if (newChips < 0) { throw ... }` ブロック（4行×2）を削除。`const newChips` 変数と `return { ...p, chips: newChips }` はそのまま残す |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## 再開指摘（reopened）
+なし
+
+## REJECT判定条件
+- `new` が1件（AI-001-showdown-dead-guard）あるため REJECT

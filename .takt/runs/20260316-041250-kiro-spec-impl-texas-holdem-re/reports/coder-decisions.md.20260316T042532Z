@@ -1,0 +1,11 @@
+# 決定ログ
+
+## 1. handProgression.test.ts の既存テスト修正
+- **背景**: `should skip chip-0 player in blind positions` テストが、旧ロジック（固定位置のSB/BB割り当て）を前提としたアサーションだった。新ロジック（`findNextEligibleIndex`によるスキップ）では、SBがindex 0、BBがindex 1になるため不整合が発生
+- **検討した選択肢**: テストの構造変更 / アサーション値の修正
+- **理由**: テストの意図（チップ0プレイヤーへのブラインド不課金）は正しいため、新ロジックに合わせてアサーション値を修正
+
+## 2. gameFlow.test.ts の既存テスト修正
+- **背景**: 2つのテスト（`should skip to showdown when only one non-folded player has chips` / `should resolve uncontested pot when only one player remains`）が `result.pot === 0` を期待していた。旧ロジックではチップ0プレイヤーにブラインドが課されるため新ハンドのpotが0だったが、新ロジックではチップ>0のプレイヤーに正しくブラインドが課されるためpotが15になる
+- **検討した選択肢**: テスト設定をゲームオーバーシナリオに変更 / アサーションをチップ保存則に変更
+- **理由**: テストの本質（ポット配分の正当性）を検証するため、総チップ保存則のアサーションに変更。テスト意図を保ちつつ新ロジックに対応

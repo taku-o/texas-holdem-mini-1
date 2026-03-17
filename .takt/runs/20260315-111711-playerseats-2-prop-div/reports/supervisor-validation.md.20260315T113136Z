@@ -1,0 +1,50 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書から要件を抽出し、各要件を実コードで個別に検証する。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | PlayerSeats から `humanPlayerId` propを削除する | ✅ | `src/ui/PlayerSeats.tsx:4-9` — `PlayerSeatsProps` に `humanPlayerId` なし |
+| 2 | `player.id === humanPlayerId` による判定を `player.isHuman` に置き換える | ✅ | `src/ui/PlayerSeats.tsx:29` — `isHuman={player.isHuman}` で置換済み |
+| 3 | PlayerSeats の呼び出し元から `humanPlayerId` の受け渡しを削除する | ✅ | `src/ui` ディレクトリ内 grep で `humanPlayerId` 0件 |
+| 4 | 不要なラッパー div を除去する | ✅ | `src/ui/PlayerSeats.tsx:25-33` — `<PlayerSeat>` に直接 `key` と `data-testid` を渡す形に変更済み |
+| 5 | PlayerSeat に `data-testid` propを受け取れるようにする（props型の拡張） | ✅ | `src/ui/PlayerSeat.tsx:10` — `'data-testid'?: string` |
+| 6 | PlayerSeat のルート `<div>` に `data-testid` を付与する | ✅ | `src/ui/PlayerSeat.tsx:26` — `data-testid={dataTestId}` |
+| 7 | ビルド（型チェック）が通ること | ✅ | `npx tsc --noEmit` 成功（出力なし） |
+| 8 | 既存テストがパスすること | ✅ | `npx vitest run` — 289 tests passed（19 test files） |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` (289 passed, 19 files) |
+| ビルド | ✅ | `npx tsc --noEmit` 成功 |
+| 動作確認 | ✅ | テスト経由で全フロー確認 |
+| AIレビュー指摘対応 | ❌ | AIR-001 未修正 |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | 前回根拠 | 今回根拠 | 理由 | 必要アクション |
+|---|------------|----------|----------|------|----------------|
+| 1 | AIR-001 | `src/ui/PlayerSeat.tsx:6`, `src/ui/PlayerSeats.tsx:29` | `src/ui/PlayerSeat.tsx:6` に `isHuman: boolean` 残存、`src/ui/PlayerSeats.tsx:29` で `isHuman={player.isHuman}` と同値渡し | AIレビューで REJECT 判定された冗長 prop が未修正。`PlayerSeat` は `player: Player` を受け取っており `player.isHuman` で直接アクセス可能なのに、別途 `isHuman: boolean` prop を受け取っている。タスクの目的「冗長な prop の削除」が PlayerSeats → PlayerSeat の1レベル下に移動しただけで根本解消されていない | (1) `PlayerSeatProps` から `isHuman` を削除 (2) `PlayerSeat` 内部で `player.isHuman` を直接参照（21行目 `shouldShowFaceUp`、23行目 `buildSeatClasses`） (3) `PlayerSeats.tsx:29` の `isHuman={player.isHuman}` を削除 (4) `PlayerSeat.test.tsx` の全11テストから `isHuman={...}` prop を削除 |
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 作成: `src/ui/CardView.tsx`, `src/ui/CardView.test.tsx`, `src/ui/PlayerSeat.tsx`, `src/ui/PlayerSeat.test.tsx`, `src/ui/PlayerSeats.tsx`, `src/ui/PlayerSeats.test.tsx`, `src/ui/TableView.tsx`, `src/ui/TableView.test.tsx`
+- 変更: `src/application/gameFlow.ts`, `src/application/gameFlow.test.ts`, `src/domain/cpuStrategy.ts`, `vite.config.ts`
+
+## REJECT判定条件
+
+- `persists` が1件（AIR-001）あるため REJECT

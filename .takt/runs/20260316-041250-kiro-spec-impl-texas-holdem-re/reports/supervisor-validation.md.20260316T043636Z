@@ -1,0 +1,47 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 2.1 | `currentBet` に実際にポストしたBB額を設定する（`BIG_BLIND` 固定にしない） | ✅ | `src/domain/dealing.ts:27` — `const bbAmount = Math.min(BIG_BLIND, players[bbIndex].chips)` で実際のBB額を算出、`src/domain/dealing.ts:35` — `currentBet: bbAmount` で設定 |
+| 2.2 | チップが0のプレイヤーにはブラインドをポストさせず、アクティブなプレイヤーのみからSB/BBを徴収する | ✅ | `src/domain/dealing.ts:4-16` — `findNextEligibleIndex` で `chips > 0` のプレイヤーを探索、`src/domain/dealing.ts:20-21` — SB/BB決定に `findNextEligibleIndex` を使用 |
+| 2.2補 | `preparePreflopRound` のBBインデックスが実際のBB位置（スキップ後）を使用する | ✅ | `src/domain/handProgression.ts:23` — `const bbIndex = nextState.lastAggressorIndex!` で `postBlinds` が設定した実際のBBインデックスを取得 |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 24ファイル 414テスト全パス |
+| ビルド | ⚠️ | `npm run build` — `ActionBar.tsx:35` でTS型エラーあり。`git stash` で変更前に戻して再ビルドし同一エラーを確認済み。タスク2変更前から存在する既存問題であり、変更対象外ファイル |
+| 要件2.1 動作確認 | ✅ | テスト `dealing.test.ts:98-116`（BB=7→currentBet=7）、`dealing.test.ts:118-133`（BB=4→currentBet=4）、`handProgression.test.ts:73-95`（preparePreflopRound経由でcurrentBet=7）がパス |
+| 要件2.2 動作確認 | ✅ | テスト `dealing.test.ts:152-174`（SBスキップ）、`dealing.test.ts:176-198`（BBスキップ）、`dealing.test.ts:200-221`（連続スキップ）、`dealing.test.ts:223-238`（lastAggressorIndex検証）、`handProgression.test.ts:47-71`（UTG位置検証）がパス |
+| スコープクリープ | ✅ | 削除ファイルなし。変更はタスク2の要件（2.1, 2.2）に限定 |
+| リグレッション | ✅ | 既存テスト414件全パス。チップ保存則テストもパス |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 変更: `src/domain/dealing.ts` — `findNextEligibleIndex` ヘルパー追加、SB/BBスキップロジック、`currentBet: bbAmount`
+- 変更: `src/domain/handProgression.ts` — `preparePreflopRound` のBBインデックス取得元を `lastAggressorIndex!` に変更
+- 変更: `src/domain/dealing.test.ts` — 新テスト7件追加（ショートスタック・スキップ関連）、既存テスト1件の名称更新
+- 変更: `src/domain/handProgression.test.ts` — 新テスト2件追加（スキップ後UTG・currentBet検証）、既存テスト1件のアサーション修正
+- 変更: `src/application/gameFlow.test.ts` — 既存テスト2件のアサーションをチップ保存則に変更
+
+## 備考
+
+- ビルドエラー（`src/ui/ActionBar.tsx:35`）はタスク1で導入された `ValidAction` 型変更に起因する既存問題。`git stash` による差分検証で、タスク2の変更有無にかかわらず同一エラーが発生することを確認済み。変更対象外ファイルのため本タスクのスコープ外。
+- AIレビューのWarning 3件（W-1: `findNextEligibleIndex` と `getNextDealerIndex` の類似、W-2: `lastAggressorIndex!` 非null表明、W-3: テストアサーション緩和）はいずれも非ブロッキング。W-1は計画で意図的にスコープ外と判断（シグネチャ・フォールバック動作が異なる）、W-2は `postBlinds` が常に設定する契約で動作上安全、W-3は `coder-decisions.md` に判断根拠が文書化済み。

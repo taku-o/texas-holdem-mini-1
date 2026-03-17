@@ -1,0 +1,19 @@
+# 変更スコープ宣言
+
+## タスク
+ゲームコントローラー（gameFlow）の実装 - 人間アクション処理とCPU自動ターン進行
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/types.ts` |
+| 作成 | `src/application/gameFlow.ts` |
+| 変更 | `src/application/gameFlow.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- GameState型にgameOverReasonフィールドを追加
+- application層の新規モジュール（domain層への依存のみ）
+- テストファイルの修正（deck設定、アサーション調整）

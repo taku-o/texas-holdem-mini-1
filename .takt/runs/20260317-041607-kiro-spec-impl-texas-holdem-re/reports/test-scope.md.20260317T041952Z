@@ -1,0 +1,17 @@
+# 変更スコープ宣言
+
+## タスク
+リスト表示の key を安定した識別子（`${card.suit}-${card.rank}`）にする
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 修正 | `src/ui/TableView.test.tsx`（既存テストに key 安定性テストを追加） |
+| 修正 | `src/ui/PlayerSeat.test.tsx`（既存テストに key 安定性テストを追加） |
+
+## 推定規模
+Small
+
+## 影響範囲
+- `src/ui/TableView.tsx` — コミュニティカードの key
+- `src/ui/PlayerSeat.tsx` — ホールカードの key

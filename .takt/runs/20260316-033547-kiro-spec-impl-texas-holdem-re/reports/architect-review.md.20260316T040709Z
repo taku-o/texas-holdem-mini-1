@@ -1,0 +1,34 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`applyAction` 内の `isTypeFeasible` バイパスはプロダクション到達不能なデッドコードであり、`ActionBar` はタスク1.4で追加された `ValidAction.min/max` を無視してドメインロジックをUI層で再実装している。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-betting-L38 | dead-code | スコープ内 | `src/domain/betting.ts:38-44` | `isTypeFeasible` バイパスは全呼び出し元が `getValidActions` で事前フィルタ済みのためプロダクション到達不能。元コードは即 `throw` だったのに「念のため」コードが追加された | バイパスを削除し `if (!validActions.some(...)) { throw new Error(...) }` に戻す。対応テスト（`betting-validation.test.ts` 行323-347, 415-437）も削除 |
+| 2 | ARCH-002-actionbar-L33 | dupe-logic | スコープ内 | `src/ui/ActionBar.tsx:29-35` | `getMinBet()` / `getMinRaise()` がドメイン層の計算を UI で再実装（DRY違反）。さらに `getMinRaise` は `currentBet * 2` を使用するがドメインは `currentBet + BIG_BLIND` であり、`currentBet > BIG_BLIND` 時に不一致。タスク1.4で `ValidAction.min/max` が追加されたのにUIで未使用（配線漏れ） | `getMinBet()` / `getMinRaise()` を削除し、`validActions.find(a => a.type === actionType)` から `min/max` を取得。`getSliderProps()` / `handleButtonClick` のデフォルト値も `ValidAction.min` に統一。テスト（`ActionBar.test.tsx:210` 等）の期待値も更新 |
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| AIR-001 | ARCH-001-betting-L38 として本レビューで引き継ぎ |
+| Warning-002 | `src/domain/cpuStrategy.ts` は変更外ファイル。スコープ外として記録のみ |
+
+## REJECT判定条件
+- `ARCH-001-betting-L38`（new）: デッドコード — プロダクション到達不能な防御分岐
+- `ARCH-002-actionbar-L33`（new）: DRY違反＋配線漏れ — ドメインロジックのUI再実装かつドメインとの計算不一致

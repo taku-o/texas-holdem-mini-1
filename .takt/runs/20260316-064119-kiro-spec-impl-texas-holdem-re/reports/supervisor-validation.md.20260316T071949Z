@@ -1,0 +1,55 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書（Task 8: CPU連続処理の非同期化）から要件を抽出し、各要件を実コードで個別に検証する。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | CPUの連続ターン処理をメインスレッドを長時間ブロックしない形に変更する | ✅ | `src/application/gameFlow.ts:51-53` — `yieldToMainThread()` が `setTimeout(resolve, 0)` で実装。`:104` で各CPUアクション後に `await yieldToMainThread()` を呼び出し |
+| 2 | 一定件数ごとにyieldする、または非同期で次のティックに回す | ✅ | `src/application/gameFlow.ts:102-104` — CPUアクション適用（`applyAction`）後に毎回 `onProgress?.(current)` → `await yieldToMainThread()` で次ティックに回す |
+| 3 | 状態更新・再描画のサイクルが進むようにする | ✅ | `src/application/gameFlow.ts:58,103` — `onProgress` コールバックで中間状態を通知。`src/application/useGameController.ts:26,46` — `setGameState` を `onProgress` として渡し、React再描画を可能にする |
+| 4 | 呼び出し側（useGameController）とのインターフェースに合わせて実装する | ✅ | `src/application/useGameController.ts:11-12` — `startGame: () => void`, `handleAction: (action: PlayerAction) => void` の外部シグネチャを維持。内部を async IIFE で包むことで非同期化しつつ同期インターフェースを保持 |
+
+**タスク本来の目的は達成されている。** ただし、AIレビュー（ai-review.md）で指摘された4件のREJECT問題が未修正のまま残存しているため、ポリシーに基づきREJECTとする。
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 451 passed, 0 failed |
+| 型チェック | ✅ | `npx tsc --noEmit` — エラーなし |
+| ビルド | ✅ | `npx vite build` — 成功（719ms） |
+| 動作確認 | ✅ | テスト経由で完全ゲームフロー・onProgress・yield動作を確認済み |
+| AIレビュー指摘対応 | ❌ | 4件のREJECT指摘が未修正 |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | 前回根拠 | 今回根拠 | 理由 | 必要アクション |
+|---|------------|----------|----------|------|----------------|
+| 1 | AIR-001 | `useGameController.ts:30,53` | `useGameController.ts:30,53` — `.catch(console.error)` が両箇所に残存 | `startGame` と `handleAction` の両方でエラーを `console.error` に出力するだけで、UIフィードバックも状態復旧もない。ポリシー「エラーの握りつぶし（空の catch）」に該当。さらに `startGame` 側には `try/finally` もないため、エラー時に状態が中間のまま固まる | `startGame` に `try/finally` を追加。エラー時に `gameState` を適切な状態（null or エラー表示可能な状態）に戻すか、最低限 `processingRef` をリセットする処理を入れる。`handleAction` 側も同様にエラー時の状態復旧を追加する |
+| 2 | AIR-002 | `useGameController.ts:68-69` | `useGameController.ts:68` — `// Keep gameStateRef in sync with gameState` が残存 | コードから自明な What コメント。ポリシー「説明コメント（What/How のコメント）」に該当 | コメントを削除する |
+| 3 | AIR-003 | `gameFlow.test.ts:291` | `gameFlow.test.ts:291` — `let state = fullState` が残存。`state` は再代入されず293行目で1回読まれるだけ | 再代入のない中間変数。`fullState` を直接使えばよい。ポリシー「未使用コード（「念のため」のコード）」に該当 | `let state = fullState` を削除し、293行目を `await advanceUntilHumanTurn(fullState, fixedRandom)` に変更 |
+| 4 | AIR-004 | `useGameController.ts:20-30` | `useGameController.ts:20-30` — `startGame` に `processingRef` ガードなし | `handleAction`（35行目）には `if (processingRef.current) return` があるが、`startGame` にはない。連打で2つの async 処理が並行して `gameStateRef.current` と `setGameState` を競合更新する。また `startGame` に `try/finally` がないため、エラー時に回復手段がない | `startGame` の先頭に `if (processingRef.current) return` を追加し、`processingRef.current = true` を設定後、async処理を `try/finally` で包んで `finally` で `processingRef.current = false` にする |
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 変更: `src/application/gameFlow.ts` — `processCpuTurnsAndPhases`, `handlePlayerAction`, `advanceUntilHumanTurn` の async 化、`yieldToMainThread` ヘルパー追加、`onProgress` コールバック追加
+- 変更: `src/application/useGameController.ts` — async IIFE 化、`gameStateRef`/`processingRef` 追加
+- 変更: `src/application/gameFlow.test.ts` — 全テストに async/await 対応
+- 変更: `src/application/useGameController.test.ts` — async act + waitFor パターンへの全面修正
+- 作成: `src/application/gameFlow.async.test.ts` — 非同期動作・onProgress・yield 専用テスト
+
+## REJECT判定条件
+
+- `persists` が4件（AIR-001, AIR-002, AIR-003, AIR-004）あるため REJECT

@@ -1,0 +1,29 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`gameFlow.test.ts` に未使用インポートが4件残存し、`useGameController.ts` の `computeIsHumanTurn` に冗長な式がある。いずれも変更ファイル内の問題でありブロッキング。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-gameFlow-test-unused-imports | unused-code | スコープ内 | `src/application/gameFlow.test.ts:5-8` | `applyAction`, `isBettingRoundComplete`, `advancePhase`, `preparePreflopRound` がインポートされているがテスト内で一度も使用されていない | 未使用の4つのインポート文を削除する |
+| 2 | ARCH-002-useGameController-redundant-expr | redundant-code | スコープ内 | `src/application/useGameController.ts:15-19` | `computeIsHumanTurn` が `findIndex` で人間プレイヤーを検索し `currentPlayerIndex` と比較しているが、`state.players[state.currentPlayerIndex].isHuman` で直接判定可能。`gameFlow.ts:90` では直接判定パターンを使用しておりプロジェクト内で不一致 | `const humanIndex = ...` 行を削除し `return state.players[state.currentPlayerIndex].isHuman` に置換 |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## 再開指摘（reopened）
+なし

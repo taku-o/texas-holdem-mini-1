@@ -1,0 +1,53 @@
+# 最終検証結果
+
+## 結果: APPROVE
+
+## 要件充足チェック
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 4.1 | ゲーム開始時に人間の席をランダムに1席決め、全プレイヤーに初期チップを付与した状態を生成 | ✅ | `src/domain/gameSetup.ts:7-8` — randomFnでランダム席・ディーラー決定、`:13` — INITIAL_CHIPSで全員1000チップ |
+| 4.2 | ディーラー左隣をSB・その左をBBとしてブラインドをポストし、ホールカード2枚を配る | ✅ | `src/domain/dealing.ts:7-8` — SB=dealer+1, BB=dealer+2、`:10-16` — チップ不足時Math.min対応、`:29-31` — 各プレイヤーに2枚配布 |
+| 4.3 | ベッティングラウンドでfold/check/bet/call/raiseを受け付け、検証し状態更新（オールイン許容・単一ポット） | ✅ | `src/domain/betting.ts:3-23` — getValidActionsで判定、`:25-98` — applyActionで検証+更新、`:50-51` — Math.minでオールイン |
+| 4.4 | ショーダウンで役判定→勝者決定→ポット配分、チップ0プレイヤーを参加不可 | ✅ | `src/domain/showdown.ts:14` — evaluate()、`:16-22` — 最小スコアが勝者、`:30-31` — 均等分配。`betting.ts:124` でチップ0スキップ |
+| 4.5 | ハンド終了後ディーラーボタンを次プレイヤーに移し、次ハンド開始 | ✅ | `src/domain/handProgression.ts:63-70` — getNextDealerIndex、`:73-91` — startNextHand+preparePreflopRound |
+| 4.6 | ゲーム終了条件（人間チップ0、CPU全員チップ0）で終了状態に遷移 | ✅ | `src/domain/handProgression.ts:94-117` — isGameOverで2条件判定 |
+| 4.7 | ディーラー業務を一連の流れで正しく行えるよう組み合わせ | ✅ | `src/domain/gameEngine.ts:1-17` — ファサードで全パブリック関数を再エクスポート |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 11ファイル、162テスト全パス |
+| ビルド | ✅ | TypeScriptエラーなし（tscチェック通過） |
+| DRY違反修正 | ✅ | ARCH-001解消確認（preparePreflopRound抽出、旧import除去、grep確認） |
+| AIレビュー指摘 | ✅ | AI-AR-001〜004全解消 |
+| スコープクリープ | ✅ | ファイル削除なし、変更は計画どおり |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+| finding_id | 解消根拠 |
+|------------|----------|
+| ARCH-001-dry-preflop-setup | `handProgression.ts:19-26` に `preparePreflopRound` を抽出。`gameSetup.ts:34` と `handProgression.ts:91` の両方から呼び出し、重複コード解消。旧import（postBlinds/dealHoleCards/getNextActivePlayerIndex）はgrepで0件確認 |
+| AI-AR-001 | `src/domain/betting.ts:61-62,74-75` — `action.amount === undefined` チェック + throw に修正済み |
+| AI-AR-002 | `src/domain/betting.ts:14-15` — `currentBet > 0` 時に `raise` を選択肢に追加済み |
+| AI-AR-003 | `src/domain/dealing.ts:23` — `postBlinds` で `lastAggressorIndex: bbIndex` を設定。テスト更新済み |
+| AI-AR-004 | `src/domain/gameEngine.ts` — `getNextActivePlayerIndex` の re-export 削除済み（grep確認: 0件） |
+
+## 成果物
+
+- 作成: `src/domain/deck.ts`, `src/domain/gameSetup.ts`, `src/domain/dealing.ts`, `src/domain/betting.ts`, `src/domain/showdown.ts`, `src/domain/handProgression.ts`, `src/domain/gameEngine.ts`
+- 作成（テスト）: `src/domain/deck.test.ts`, `src/domain/gameSetup.test.ts`, `src/domain/dealing.test.ts`, `src/domain/betting.test.ts`, `src/domain/showdown.test.ts`, `src/domain/handProgression.test.ts`, `src/domain/gameEngine.integration.test.ts`
+- 変更: `src/domain/types.ts`（lastAggressorIndex追加）, `src/domain/types.test.ts`（対応テスト更新）
+
+## REJECT判定条件
+
+- `new`、`persists` いずれも0件のため APPROVE

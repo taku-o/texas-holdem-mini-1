@@ -1,0 +1,13 @@
+{
+  "task": "# タスク指示書\n\n## 概要\n`debug_common.test.ts` のインライン `state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot` パターン（2箇所）を、既存の `calcTotalChips` ヘルパーに置き換える。\n\n## 優先度: 高\n\n## 作業内容\n\n### 対象ファイル: `debug_common.test.ts`\n\n#### 変更1: 32行目\n- `state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot` → `calcTotalChips(state)` に置換\n\n#### 変更2: 39行目\n- `result.players.reduce((sum, p) => sum + p.chips, 0) + result.pot` → `calcTotalChips(result)` に置換\n\n#### import追加\n- `calcTotalChips` を `src/domain/testHelpers` からインポートする\n\n### 注意事項\n- `calcTotalChips` は `src/domain/testHelpers.ts` （9行目）に既に定義済み: `state.players.reduce((sum, p) => sum + p.chips, 0) + state.pot` と同一ロジック\n- 同ファイル126行目・136行目・142行目にも `reduce` パターンがあるが、これらは `+ state.pot` を含まない（チップのみの合計）ため `calcTotalChips` とは異なるロジック。置換対象外\n\n## 確認方法\n- 既存テストが全てパスすること",
+  "piece": "default",
+  "runSlug": "20260315-174059-debug-common-test-ts-state-pla",
+  "runRoot": ".takt/runs/20260315-174059-debug-common-test-ts-state-pla",
+  "reportDirectory": ".takt/runs/20260315-174059-debug-common-test-ts-state-pla/reports",
+  "contextDirectory": ".takt/runs/20260315-174059-debug-common-test-ts-state-pla/context",
+  "logsDirectory": ".takt/runs/20260315-174059-debug-common-test-ts-state-pla/logs",
+  "status": "completed",
+  "startTime": "2026-03-15T17:40:59.935Z",
+  "endTime": "2026-03-15T17:50:23.604Z",
+  "iterations": 7
+}

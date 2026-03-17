@@ -1,0 +1,27 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+debug_game.ts にリファクタリング起因の未使用インポートが1件残存しており、差し戻します。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | UNUSED_IMPORT_1 | dead-code | `debug_game.ts:3` | `debug_game.ts:3` — ファイル全39行を確認、import以外に`isBettingRoundComplete`の参照なし | `executeBettingRound`への委譲により`isBettingRoundComplete`が未使用になった | `import { isBettingRoundComplete } from './src/domain/betting'` の行を削除する |
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| SCOPE_SHRINK_1 | coder-decisions.mdの設計判断を評価し妥当と判断。debug_game3.tsは診断用スクリプトでありロガーコールバック追加はAPIサーフェスの不要な増大。計画でも手動ループ残存を許容 |
+
+## REJECT判定条件
+- `persists` が1件（UNUSED_IMPORT_1）あるため REJECT

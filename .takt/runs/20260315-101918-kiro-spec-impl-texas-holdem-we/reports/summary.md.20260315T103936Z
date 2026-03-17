@@ -1,0 +1,22 @@
+# タスク完了サマリー
+
+## タスク
+タスク6「ゲームコントローラーの実装」（サブタスク 6.1, 6.2, 6.3）— React カスタムフック `useGameController` の実装。
+
+## 結果
+未完了（REJECT）
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 作成 | `src/application/useGameController.ts` | ゲーム状態管理カスタムフック（startGame, handleAction, validActions, isHumanTurn） |
+| 作成 | `src/application/useGameController.test.ts` | 21件のテスト（初期状態、ゲーム開始、アクション処理、ゲーム終了等） |
+
+## REJECT理由
+AI Review で指摘された AIR-001（`computeIsHumanTurn` の冗長な `findIndex` 実装）が未修正。`src/application/useGameController.ts:17-18` を `return state.players[state.currentPlayerIndex].isHuman` に置換する必要がある。
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+```

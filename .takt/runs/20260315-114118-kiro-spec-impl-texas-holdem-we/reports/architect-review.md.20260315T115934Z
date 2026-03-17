@@ -1,0 +1,29 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+bet/raiseのmin値計算ロジックが `handleButtonClick` と `getSliderProps` の2箇所に重複しており、DRY違反に該当する。共通関数への抽出が必要。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001-dry-minbet | dry-violation | スコープ内 | `src/ui/ActionBar.tsx:33,75` | betのmin値 `Math.min(BIG_BLIND, playerChips)` が `handleButtonClick` と `getSliderProps` で重複 | `getMinBet(): number` を抽出し両箇所から呼ぶ |
+| 2 | ARCH-002-dry-minraise | dry-violation | スコープ内 | `src/ui/ActionBar.tsx:40,70` | raiseのmin値 `Math.min(currentBet * 2, playerChips + playerCurrentBetInRound)` が同様に重複 | `getMinRaise(): number` を抽出し両箇所から呼ぶ |
+
+## 継続指摘（persists）
+なし
+
+## 解消済み（resolved）
+なし
+
+## REJECT判定条件
+- ARCH-001, ARCH-002: `new` が2件 → REJECT

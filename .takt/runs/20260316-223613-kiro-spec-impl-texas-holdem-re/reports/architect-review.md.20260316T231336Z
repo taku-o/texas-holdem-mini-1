@@ -1,0 +1,32 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+前回AIレビューで指摘された2件（空の catch ブロック、setState 形式の不統一）がいずれも未解消。変更ファイル内の問題でありボーイスカウトルール適用対象。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | AIR-009-001 | error-swallowing | `src/application/useGameController.ts:37-39` | `src/application/useGameController.ts:37-39` | 空の catch ブロック。React 18 の setState はアンマウント後でも例外を投げないため、内側の try-catch 自体が不要な防御コード | 内側の try-catch を削除し `setGameState(() => null)` を catch ブロック内で直接呼び出す |
+| 2 | AIR-009-002 | style-inconsistency | `src/application/useGameController.ts:63` | `src/application/useGameController.ts:63` | `handleAction` 内の `setGameState(result)` が直接値渡しのまま。同一フック内で関数形式と混在しタスク目的「統一」が未達 | `setGameState(() => result)` に変更 |
+
+## 解消済み（resolved）
+
+なし
+
+## REJECT判定条件
+- `persists` が2件あるため REJECT

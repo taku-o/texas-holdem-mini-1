@@ -1,0 +1,52 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク 3.1「@pokertools/evaluator を用いて、7枚のカードから最良の5枚役のランクを返すアダプタを実装する（役はハイカード〜ロイヤルストレートフラッシュ）。同一役の場合はキッカー等で比較可能なランクを返す」（Requirements: 5.4, 5.5）
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | @pokertools/evaluator を使用してアダプタを実装する | ✅ | `src/domain/handEvaluator.ts:1` — `import { evaluateStrings, rankBoard } from '@pokertools/evaluator'`。`package.json` に `"@pokertools/evaluator": "^1.0.1"` 追加済み |
+| 2 | 7枚のカードから最良の5枚役を判定する | ✅ | `src/domain/handEvaluator.ts:48-59` — `evaluate(cards: Card[]): HandRank` が `evaluateStrings(libCards)` に委譲。テスト `handEvaluator.test.ts:371-388`（7枚入力）PASS |
+| 3 | 役はハイカード〜ロイヤルストレートフラッシュの全10種を判定する | ✅ | `src/domain/handEvaluator.ts:30-39` — `LIB_RANK_TO_CATEGORY` で9カテゴリ、`handEvaluator.ts:54-57` でロイヤルフラッシュを分離。テスト `handEvaluator.test.ts:9-199` で全10カテゴリ個別検証 PASS |
+| 4 | 同一役の場合キッカー等で比較可能なスコアを返す | ✅ | `src/domain/handEvaluator.ts:50,59` — `evaluateStrings` のスコア（低い=強い）を `HandRank.score` に格納。テスト `handEvaluator.test.ts:234-263` で同一カテゴリ（ワンペア）のスコア比較検証 PASS |
+| 5 | Req 5.4: ショーダウンで役の強さに従って勝者を判定可能 | ✅ | `src/domain/handEvaluator.ts:59` — `{ category, score }` を返却。score の大小で勝者判定可能。テスト `handEvaluator.test.ts:294-332` でカテゴリ跨ぎのスコア順序検証 PASS |
+| 6 | Req 5.5: 標準ルール（ハイカード〜ロイヤルストレートフラッシュ）に従って判定する | ✅ | テスト23件で全カテゴリ＋エッジケース（エースローストレート `handEvaluator.test.ts:476-493`、エースハイストレート `handEvaluator.test.ts:495-512`）を検証し全 PASS |
+| 7 | ライブラリ型の漏洩禁止（計画ガイドライン） | ✅ | `src/domain/handEvaluator.ts` — export は `evaluate` 関数のみ。ライブラリの型・関数は一切エクスポートされていない |
+| 8 | What/Howコメントがないこと（レビューポリシー） | ❌ | `src/domain/handEvaluator.ts:27-29` — AIレビュー(AIR-001-comment)で指摘されたWhat/Howコメントが未修正のまま残存 |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 23 tests passed（handEvaluator.test.ts） |
+| TypeScript型チェック | ✅ | `npx tsc --noEmit` — エラーなし |
+| スコープクリープ | ✅ | 削除ファイルなし。変更スコープはタスク要件に合致 |
+| 動作確認 | ✅ | 全10カテゴリ＋エッジケース＋5/6/7枚入力 テスト PASS |
+
+## 今回の指摘（new）
+
+なし
+
+## 継続指摘（persists）
+
+| # | finding_id | 前回根拠 | 今回根拠 | 理由 | 必要アクション |
+|---|------------|----------|----------|------|----------------|
+| 1 | AIR-001-comment | `src/domain/handEvaluator.ts:27-29`（AIレビュー時） | `src/domain/handEvaluator.ts:27-29`（現在も同一内容が残存） | AIレビューでREJECT指摘されたWhat/Howコメント3行が未修正。ポリシー「説明コメント（What/How のコメント）→ REJECT」に該当 | 以下の3行を削除する: `// @pokertools/evaluator の HandRank const enum の値に対応` / `// StraightFlush=0, FourOfAKind=1, FullHouse=2, Flush=3, Straight=4,` / `// ThreeOfAKind=5, TwoPair=6, OnePair=7, HighCard=8` |
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 作成: `src/domain/handEvaluator.ts`（アダプタ本体 60行）
+- 作成: `src/domain/handEvaluator.test.ts`（テスト 515行、23テストケース）
+- 変更: `package.json`（`@pokertools/evaluator` 依存追加）
+- 変更: `package-lock.json`
+
+## REJECT判定条件
+
+- `AIR-001-comment` (persists) が1件あるため REJECT。AIレビューフェーズで指摘済みのWhat/How説明コメントが `src/domain/handEvaluator.ts:27-29` に残存しており、修正されていない。コメント3行の削除のみで解消する軽微な修正。

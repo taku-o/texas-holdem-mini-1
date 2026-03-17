@@ -1,0 +1,29 @@
+# タスク完了サマリー
+
+## タスク
+テキサスホールデムWebアプリのテーブル・カード・席の表示UIコンポーネント群（タスク7.1, 7.2）を実装する。コミュニティカード・ポット額・プレイヤー席（手札・チップ・フォールド状態・ディーラーマーカー・ターンハイライト）を表示するプレゼンテーションコンポーネントを作成する。
+
+## 結果
+完了
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 作成 | `src/ui/CardView.tsx` | 1枚のカード表示コンポーネント（表面/裏面切替、スート色分け ♠♣黒/♥♦赤） |
+| 作成 | `src/ui/TableView.tsx` | コミュニティカード（0〜5枚）横並び表示 + ポット額テキスト表示 |
+| 作成 | `src/ui/PlayerSeat.tsx` | 1席分のプレイヤー情報表示（チップ数・手札・フォールド半透明・ディーラー"D"バッジ・ターンハイライト・人間席強調リング） |
+| 作成 | `src/ui/PlayerSeats.tsx` | 全5席の配置レイアウトとショーダウン時カード公開制御 |
+| 作成 | `src/ui/CardView.test.tsx` | CardViewテスト（9テスト：表面表示・裏面表示・4スート色分け） |
+| 作成 | `src/ui/TableView.test.tsx` | TableViewテスト（7テスト：カード0/3/4/5枚・ポット額0/150/5000） |
+| 作成 | `src/ui/PlayerSeat.test.tsx` | PlayerSeatテスト（11テスト：チップ・人間/CPU手札・フォールド・ディーラー・ターン・手札なし） |
+| 作成 | `src/ui/PlayerSeats.test.tsx` | PlayerSeatsテスト（7テスト：5席配置・人間識別・ディーラー配置・ショーダウン公開/非公開） |
+| 変更 | `vite.config.ts` | `globals: true` 追加（testing-library自動クリーンアップ対応） |
+| 変更 | `src/application/gameFlow.ts` | What/Howコメント2行削除（ARCH-001対応） |
+| 変更 | `src/domain/cpuStrategy.ts` | Whatコメント1行削除（ARCH-001同種対応） |
+| 変更 | `src/application/gameFlow.test.ts` | 「1人だけチップ残りの場合のフェーズスキップ」境界条件テスト1件追加 |
+
+## 確認コマンド
+```bash
+npx vitest run
+npm run build
+```

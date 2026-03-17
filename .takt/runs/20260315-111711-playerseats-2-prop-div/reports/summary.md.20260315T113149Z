@@ -1,0 +1,33 @@
+# タスク完了サマリー
+
+## タスク
+PlayerSeats コンポーネントから冗長な `humanPlayerId` prop を削除し `player.isHuman` に置き換える。また不要なラッパー div を除去し `data-testid` を PlayerSeat に直接渡す形に変更する。
+
+## 結果
+未完了（REJECT）
+
+## 未完了理由
+AIレビュー指摘 AIR-001（`PlayerSeat` の `isHuman` prop が `player.isHuman` と冗長）が未修正。冗長性が PlayerSeats から PlayerSeat に移動しただけで根本解消されていない。
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 作成 | `src/ui/PlayerSeat.tsx` | プレイヤー席コンポーネント（`isHuman` 冗長 prop 残存） |
+| 作成 | `src/ui/PlayerSeat.test.tsx` | PlayerSeat テスト（11テスト） |
+| 作成 | `src/ui/PlayerSeats.tsx` | プレイヤー席一覧コンポーネント（`humanPlayerId` 除去済み、ラッパー div 除去済み） |
+| 作成 | `src/ui/PlayerSeats.test.tsx` | PlayerSeats テスト（7テスト） |
+| 作成 | `src/ui/CardView.tsx` | カード表示コンポーネント |
+| 作成 | `src/ui/CardView.test.tsx` | CardView テスト |
+| 作成 | `src/ui/TableView.tsx` | テーブル表示コンポーネント |
+| 作成 | `src/ui/TableView.test.tsx` | TableView テスト |
+
+## 必要な修正
+1. `src/ui/PlayerSeat.tsx:6` — `PlayerSeatProps` から `isHuman: boolean` を削除し、内部で `player.isHuman` を直接参照
+2. `src/ui/PlayerSeats.tsx:29` — `isHuman={player.isHuman}` 行を削除
+3. `src/ui/PlayerSeat.test.tsx` — 全11テストから `isHuman={...}` prop を削除
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+```

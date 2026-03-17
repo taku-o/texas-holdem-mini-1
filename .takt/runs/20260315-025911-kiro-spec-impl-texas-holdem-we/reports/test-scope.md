@@ -1,0 +1,16 @@
+# 変更スコープ宣言
+
+## タスク
+`@pokertools/evaluator` を用いたハンド評価アダプタ `evaluate()` のユニットテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/domain/handEvaluator.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `src/domain/handEvaluator.ts`（未実装のプロダクションコード）
+- `src/domain/types.ts`（Card, HandRank, HandRankCategory 型を使用）

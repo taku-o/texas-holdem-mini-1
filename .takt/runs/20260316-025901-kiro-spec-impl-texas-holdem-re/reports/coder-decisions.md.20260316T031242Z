@@ -1,0 +1,16 @@
+# 決定ログ
+
+## 1. applyAction で bet/raise を getValidActions から除外して検証
+- **背景**: `getValidActions` は UI 表示用にチップ < BIG_BLIND の場合に bet を除外する。一方、`applyAction` ではオールインベット（全チップ投入）を許可する必要がある。既存の `applyAction` は `getValidActions` の結果で action type の有効性をチェックしていたため、オールインベットが拒否されてしまう
+- **検討した選択肢**: (A) getValidActions にオールイン用の bet を含める、(B) applyAction で bet/raise を getValidActions チェックから除外し個別バリデーションに任せる
+- **理由**: (A) はテスト 1.2 「should not include bet when player chips are less than BIG_BLIND」と矛盾する。(B) は bet/raise に専用のバリデーション（amount 超過、最小額未満チェック）が追加済みのため、getValidActions を経由する必要がない
+
+## 2. raise 条件を minRaiseCost ベースに変更
+- **背景**: 元の実装は `player.chips > callAmount`（コール額を超えるチップがあれば raise 可能）だったが、テスト 1.2 「should not include raise when player cannot afford minimum raise」は最小レイズ総額を支払えるかを要求している
+- **検討した選択肢**: (A) `player.chips > callAmount`、(B) `player.chips >= minRaiseCost`（minRaiseCost = minRaiseTotal - currentBetInRound）
+- **理由**: (B) が正しい。コール額を超えるチップがあっても最小レイズ額（currentBet + BIG_BLIND）に足りない場合、raise ボタンを表示すべきではない
+
+## 3. ActionBar.test.tsx / GameScreen.test.tsx の型アノテーション変更
+- **背景**: `getValidActions` の返却型が `PlayerAction[]` から `ValidAction[]` に変更され、ActionBar と GameScreen の props も `ValidAction[]` に変更された。テストの型アノテーションを更新する必要があった
+- **検討した選択肢**: 変更なし（コンパイルエラー）、型アノテーション更新
+- **理由**: オブジェクトリテラル `{ type: 'fold' }` は `ValidAction` を満たすため、型アノテーションの変更のみで動作に影響なし

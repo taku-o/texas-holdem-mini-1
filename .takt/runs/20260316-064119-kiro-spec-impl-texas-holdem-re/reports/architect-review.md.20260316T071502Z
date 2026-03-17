@@ -1,0 +1,34 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`useGameController.ts` にエラー握りつぶし・二重実行防止の欠落・説明コメントの3件、`gameFlow.test.ts` に未使用変数1件、`gameFlow.async.test.ts` に無意味なアサーション1件が存在する。いずれも今回の変更で導入された問題であり、修正が必要。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | ARCH-001 | weak-test | スコープ内 | `src/application/gameFlow.async.test.ts:206` | テスト名は「onProgressが呼ばれない」を期待するが、アサーションが `expect(onProgress).toBeDefined()` のみで何も検証していない。`vi.fn()` は常に defined。「テストがない新しい振る舞い」に該当 | `expect(onProgress).not.toHaveBeenCalled()` に変更するか、テスト前提を正確に構築して適切なアサーションを行う |
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | AIR-001 | error-swallow | `useGameController.ts:30,53` | `useGameController.ts:30,53` | `.catch(console.error)` でエラーを握りつぶし。`startGame` は `try/finally` もなく失敗時に `gameStateRef` が不整合 | `startGame` に `try/finally` を追加し、`catch` 内でエラー復旧処理（`setGameState(null)` 等）を行う |
+| 2 | AIR-004 | design-inconsistency | `useGameController.ts:20-30` | `useGameController.ts:20-30` | `handleAction` には `processingRef` ガードがあるが `startGame` には無い。同一 hook 内で非同期ガードパターンが不統一 | `startGame` 先頭に `if (processingRef.current) return` を追加し、`try/finally` で `processingRef.current` を制御する |
+| 3 | AIR-002 | what-comment | `useGameController.ts:68-69` | `useGameController.ts:68` | `// Keep gameStateRef in sync with gameState` はコードの動作の言い換え | コメントを削除する |
+| 4 | AIR-003 | dead-code | `gameFlow.test.ts:291` | `gameFlow.test.ts:291` | `let state = fullState` は再代入されず `fullState` を直接使えばよい | `let state = fullState` を削除し、293行目で `fullState` を直接使用する |
+
+## 解消済み（resolved）
+
+なし
+
+## REJECT判定条件
+- `new` 1件（ARCH-001）、`persists` 4件（AIR-001, AIR-004, AIR-002, AIR-003）が存在するため REJECT

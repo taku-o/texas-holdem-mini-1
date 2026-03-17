@@ -1,0 +1,15 @@
+# 変更スコープ宣言
+
+## タスク
+ショーダウン時のポット配分の正当性確保（単一ポット前提の明示と不変条件の保証）
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 変更 | `src/domain/showdown.ts` |
+
+## 推定規模
+Small
+
+## 影響範囲
+- showdown モジュール（evaluateShowdown, resolveUncontestedPot）

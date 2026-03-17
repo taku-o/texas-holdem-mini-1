@@ -1,0 +1,38 @@
+# タスク完了サマリー
+
+## タスク
+レビューで指摘された5件のコード重複（デバッグスクリプト共通構造、facadeエクスポートテスト、ベッティングラウンドループ、ゲーム終了待ちループ、チップ保存則チェック）を、共通関数・ヘルパーの抽出により解消する。
+
+## 結果
+未完了（REJECT） — AIレビュー指摘の2件が未解消
+
+## 変更内容
+| 種別 | ファイル | 概要 |
+|------|---------|------|
+| 作成 | `debug_common.ts` | デバッグスクリプト共通モジュール（executeBettingRound, setupCpuChips, アクション選択戦略） |
+| 作成 | `debug_common.test.ts` | debug_common.ts のテスト |
+| 作成 | `src/domain/testHelpers.calcTotalChips.test.ts` | calcTotalChips のテスト |
+| 変更 | `debug_game.ts` | debug_common.ts を利用する形にリファクタリング（⚠️ 未使用import残存） |
+| 変更 | `debug_game2.ts` | debug_common.ts を利用する形にリファクタリング |
+| 変更 | `debug_game3.ts` | cpuFoldHumanCallSelector のみ共有（⚠️ ベッティングループ未共通化） |
+| 変更 | `src/domain/testHelpers.ts` | calcTotalChips 関数追加 |
+| 変更 | `src/domain/gameEngine.integration.test.ts` | EXPECTED_EXPORTS定数化、advanceAndCheckAllヘルパー抽出、calcTotalChips適用 |
+| 変更 | `src/application/useGameController.test.ts` | waitForGameEndヘルパー抽出、calcTotalChips適用 |
+| 変更 | `src/application/gameFlow.test.ts` | calcTotalChips適用 |
+| 変更 | `src/domain/gameSetup.test.ts` | calcTotalChips適用 |
+| 変更 | `src/domain/showdown.test.ts` | calcTotalChips適用 |
+
+## 未解消項目
+| # | finding_id | 内容 |
+|---|------------|------|
+| 1 | AI-UNUSED-IMPORT-debug_game-L3 | `debug_game.ts:3` の未使用インポート `isBettingRoundComplete` を削除する必要あり |
+| 2 | AI-SCOPE-SHRINK-debug_game3 | `executeBettingRound` にロガーコールバックを追加し、`debug_game3.ts:29-41` のインラインループを置換する必要あり |
+
+## 確認コマンド
+```bash
+npx vitest run
+npx tsc --noEmit
+npx tsx debug_game.ts
+npx tsx debug_game2.ts
+npx tsx debug_game3.ts
+```

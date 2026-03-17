@@ -1,0 +1,28 @@
+# アーキテクチャレビュー
+
+## 結果: REJECT
+
+## サマリー
+`PlayerSeat` の `isHuman` propが `player.isHuman` と冗長。タスクの目的である冗長性解消が `PlayerSeats` → `PlayerSeat` に1レベル移動しただけで根本解消していない。
+
+## 確認した観点
+- [x] 構造・設計
+- [x] コード品質
+- [x] 変更スコープ
+- [x] テストカバレッジ
+- [x] デッドコード
+- [x] 呼び出しチェーン検証
+
+## 今回の指摘（new）
+該当なし
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | AIR-001 | redundant-prop | `src/ui/PlayerSeat.tsx:6`, `src/ui/PlayerSeats.tsx:29` | `src/ui/PlayerSeat.tsx:6` に `isHuman: boolean` 残存、`src/ui/PlayerSeats.tsx:29` で `isHuman={player.isHuman}` と同値渡し | `PlayerSeat` は `player: Player` を受け取っており `player.isHuman` でアクセス可能。別propとして `isHuman` を渡すのは冗長 | `PlayerSeatProps` から `isHuman` を削除し、内部で `player.isHuman` を直接使用。`PlayerSeats.tsx:29` の `isHuman={player.isHuman}` 行を削除。`PlayerSeat.test.tsx` の全テスト（16箇所）から `isHuman={...}` propを削除 |
+
+## 解消済み（resolved）
+該当なし
+
+## 再開指摘（reopened）
+該当なし

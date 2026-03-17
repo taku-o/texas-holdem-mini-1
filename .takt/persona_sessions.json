@@ -1,0 +1,12 @@
+{
+  "personaSessions": {
+    "planner": "afb89361-e9c7-4b97-b616-1ff7ee693fdb",
+    "coder": "ec92f7a2-7756-416f-aadd-fb4b030f98b1",
+    "ai-antipattern-reviewer": "cc2540f6-17e6-4130-890e-a38cd60160d1",
+    "supervisor": "e562d3ff-7aa0-44f4-a4ac-0cf9353aea45",
+    "architecture-reviewer": "82e36b90-db34-4be0-aa2b-9431b6064c96",
+    "interactive": "946f4fee-3796-47b5-82b4-d3a9a38ee748"
+  },
+  "updatedAt": "2026-03-17T14:03:51.642Z",
+  "provider": "claude"
+}

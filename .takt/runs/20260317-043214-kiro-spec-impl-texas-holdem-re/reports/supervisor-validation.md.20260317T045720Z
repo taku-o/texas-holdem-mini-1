@@ -1,0 +1,50 @@
+# 最終検証結果
+
+## 結果: REJECT
+
+## 要件充足チェック
+
+タスク指示書（tasks.md）のタスク11から要件を抽出し、各要件を実コードで個別に検証。
+
+| # | 要件（タスク指示書から抽出） | 充足 | 根拠（ファイル:行） |
+|---|---------------------------|------|-------------------|
+| 1 | 11.1: ベット/レイズ確定前にmin/max範囲内であることをクライアント側で検証する | ✅ | `src/ui/ActionBar.tsx:42-47` — `isChipAmountValid()` が `chipInputMode` と `findAction()` を使い min/max 範囲チェックを実施 |
+| 2 | 11.1: 範囲外の値では送信を無効化する | ✅ | `src/ui/ActionBar.tsx:152` — `disabled={!isValid}` でConfirmボタン無効化 + `src/ui/ActionBar.tsx:51` — `handleConfirm` 内の `if (!isChipAmountValid()) return` でプログラム的ガード |
+| 3 | 11.2: スライダーにlabelまたはaria-labelで意味が分かるラベルを付与する | ✅ | `src/ui/ActionBar.tsx:139` — `aria-label={sliderLabel}` （bet: "Bet amount", raise: "Raise amount"） |
+| 4 | 11.2: 数値入力にlabelまたはaria-labelで意味が分かるラベルを付与する | ✅ | `src/ui/ActionBar.tsx:148` — `aria-label={inputLabel}` （bet: "Bet amount input", raise: "Raise amount input"） |
+| 5 | 11.3: カード裏面にalt/aria-labelでアクセシブルな説明を付与する | ✅ | `src/ui/CardView.tsx:24-25` — `role="img" aria-label="Card back"` |
+| 6 | ビルドが成功すること（Definition of Done） | ❌ | `src/ui/ActionBar.tsx:35` — TS2345ビルドエラー |
+
+## 検証サマリー
+
+| 項目 | 状態 | 確認方法 |
+|------|------|---------|
+| テスト | ✅ | `npx vitest run` — 26ファイル 475テスト全パス |
+| ビルド | ❌ | `npm run build` — TS2345エラー（`src/ui/ActionBar.tsx:35`） |
+| 動作確認 | ✅ | テスト経由で全要件の動作確認済み |
+
+## 今回の指摘（new）
+
+| # | finding_id | 項目 | 根拠 | 理由 | 必要アクション |
+|---|------------|------|------|------|----------------|
+| 1 | SUP-001-ActionBar-L35-TS2345 | TypeScriptビルドエラー | `src/ui/ActionBar.tsx:35` | `setChipInputMode(actionType)` で `ActionType`（'fold'\|'check'\|'call'\|'bet'\|'raise'）を `'bet' \| 'raise' \| null` 型のステートに代入しており、TypeScriptが型エラーを報告。ランタイムではL30の `CHIP_INPUT_ACTIONS.includes(actionType)` により 'bet'/'raise' のみ到達するが、`CHIP_INPUT_ACTIONS` が `ActionType[]` 型のため型絞り込みが効かない。既存コードの問題だが、変更対象ファイル内でありボーイスカウトルールに基づきREJECT | 修正案: (A) `setChipInputMode(actionType as 'bet' \| 'raise')` にキャスト、または (B) `const CHIP_INPUT_ACTIONS: readonly ('bet' \| 'raise')[] = ['bet', 'raise'] as const` に変更し型ガードを機能させる。方法Bが型安全性の観点で推奨 |
+
+## 継続指摘（persists）
+
+なし
+
+## 解消済み（resolved）
+
+なし
+
+## 成果物
+
+- 変更: `src/ui/ActionBar.tsx`（バリデーション関数 + Confirmボタンdisabled制御 + aria-label付与）
+- 変更: `src/ui/CardView.tsx`（カード裏面 role="img" + aria-label）
+- 変更: `src/ui/ActionBar.test.tsx`（11.1: 6テスト, 11.2: 5テスト追加）
+- 変更: `src/ui/CardView.test.tsx`（11.3: 4テスト追加）
+
+## REJECT判定条件
+
+- `SUP-001-ActionBar-L35-TS2345`（new）が1件あるため REJECT
+- `npm run build` が失敗する状態ではデプロイ不可能であり、最終門番として通過させられない

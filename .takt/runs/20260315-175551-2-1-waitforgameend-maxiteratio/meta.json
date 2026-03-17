@@ -1,0 +1,13 @@
+{
+  "task": "# タスク指示書\n\n## 概要\nレビュー指摘事項2件の修正\n\n## 作業内容\n\n### 1. waitForGameEnd の maxIterations 到達時にエラーをスローする（優先度: 中）\n\n**対象ファイル:** `src/application/useGameController.test.ts`\n\n**現状の問題:** テストヘルパー関数 `waitForGameEnd` が `maxIterations` に到達した場合、サイレントにループを抜けてテストがパスしてしまう。\n\n**修正内容:** `maxIterations` に到達した場合、エラーをスローしてテスト失敗を明示する。\n\n### 2. debug_game3.ts のロガー内での冗長な getValidActions() 呼び出しを除去する（優先度: 低）\n\n**対象ファイル:** `debug_game3.ts`（プロジェクトルートまたは該当ディレクトリを調査して特定すること）\n\n**現状の問題:** `executeBettingRound` 内で既に `getValidActions` が呼ばれているにもかかわらず、ロガー内で再度 `getValidActions()` を呼び出しており、不要な重複計算が発生している。\n\n**修正内容:** ロガー内の冗長な `getValidActions()` 呼び出しを削除し、`executeBettingRound` 内で既に取得済みの結果を利用するようにする。",
+  "piece": "default",
+  "runSlug": "20260315-175551-2-1-waitforgameend-maxiteratio",
+  "runRoot": ".takt/runs/20260315-175551-2-1-waitforgameend-maxiteratio",
+  "reportDirectory": ".takt/runs/20260315-175551-2-1-waitforgameend-maxiteratio/reports",
+  "contextDirectory": ".takt/runs/20260315-175551-2-1-waitforgameend-maxiteratio/context",
+  "logsDirectory": ".takt/runs/20260315-175551-2-1-waitforgameend-maxiteratio/logs",
+  "status": "completed",
+  "startTime": "2026-03-15T17:55:51.855Z",
+  "endTime": "2026-03-15T18:06:07.451Z",
+  "iterations": 5
+}

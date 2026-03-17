@@ -1,0 +1,16 @@
+# 決定ログ
+
+## 1. decideAction のシグネチャを設計書から変更
+- **背景**: 設計書では `decideAction(state, playerId: string)` だが、テストでは `decideAction(state, playerIndex: number, randomFn)` を使用
+- **検討した選択肢**: 設計書準拠（playerId）、テスト準拠（playerIndex + randomFn）
+- **理由**: テストが既に作成済みであり、テストのシグネチャに合わせた。playerIndex は既存の betting モジュール（getValidActions）と同じインターフェース。randomFn によりテストの決定性を担保
+
+## 2. プリフロップ評価の閾値設定
+- **背景**: プリフロップのハンド強度を分類する基準が必要
+- **検討した選択肢**: 複雑なレンジ表、シンプルな閾値ベース
+- **理由**: 設計書が「初版はシンプルなルールベースでよい」と明記。ポケットペア（高ランク=strong, 低ランク=medium）、スーテッド高ランク=strong、その他=weak のシンプルな分類を採用
+
+## 3. ポストフロップ評価の境界
+- **背景**: テストが three-of-a-kind 以上を strong、one-pair を medium、high-card を weak として期待
+- **検討した選択肢**: スコアベース、カテゴリベース
+- **理由**: テストの期待値に合致するカテゴリベース分類を採用。straight以上も strong に含めた（テストでは直接検証されないが、論理的に妥当）

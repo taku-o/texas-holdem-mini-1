@@ -1,0 +1,16 @@
+# 変更スコープ宣言
+
+## タスク
+ベッティングのバリデーション・ラウンド終了判定・有効アクション返却形式の修正に対するテスト作成
+
+## 変更予定
+| 種別 | ファイル |
+|------|---------|
+| 作成 | `src/domain/betting-validation.test.ts` |
+
+## 推定規模
+Medium
+
+## 影響範囲
+- `src/domain/betting.ts` — getValidActions, applyAction, isBettingRoundComplete の振る舞い変更
+- `src/domain/types.ts` — ValidAction 型の追加
