@@ -26,7 +26,7 @@ describe('ActionBar', () => {
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
-        { type: 'bet' },
+        { type: 'bet', min: BIG_BLIND, max: 1000 },
       ]
 
       // When: ActionBarをレンダリングする
@@ -43,7 +43,7 @@ describe('ActionBar', () => {
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 1000 },
       ]
 
       // When: ActionBarをレンダリングする
@@ -139,7 +139,7 @@ describe('ActionBar', () => {
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'call' },
-        { type: 'raise' },
+        { type: 'raise', min: 30, max: 1000 },
       ]
 
       // When: ActionBarをレンダリングする

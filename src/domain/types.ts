@@ -36,11 +36,12 @@ export type PlayerAction = {
   amount?: number
 }
 
-export type ValidAction = {
-  type: ActionType
-  min?: number
-  max?: number
-}
+export type ValidAction =
+  | { type: 'fold' }
+  | { type: 'check' }
+  | { type: 'call' }
+  | { type: 'bet'; min: number; max: number }
+  | { type: 'raise'; min: number; max: number }
 
 export type GamePhase =
   | 'idle'

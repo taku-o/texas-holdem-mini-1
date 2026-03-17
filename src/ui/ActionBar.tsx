@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { ActionType, PlayerAction, ValidAction } from '../domain/types'
+
+type RangeAction = Extract<ValidAction, { min: number }>
 import { BIG_BLIND } from '../domain/constants'
 
 export type ActionBarProps = {
@@ -25,16 +27,18 @@ export function ActionBar({
 
   const validActionTypes = new Set(validActions.map((a) => a.type))
 
-  function findAction(type: ActionType): ValidAction | undefined {
-    return validActions.find((a) => a.type === type)
+  function findRangeAction(type: 'bet' | 'raise'): RangeAction | undefined {
+    return validActions.find(
+      (a): a is RangeAction => a.type === type,
+    )
   }
 
   function handleButtonClick(actionType: ActionType) {
     if (!validActionTypes.has(actionType)) return
 
     if (isChipInputAction(actionType)) {
-      const action = findAction(actionType)
-      if (action?.min !== undefined) {
+      const action = findRangeAction(actionType)
+      if (action) {
         setChipAmount(action.min)
       }
       setChipInputMode(actionType)
@@ -46,8 +50,8 @@ export function ActionBar({
 
   function isChipAmountValid(): boolean {
     if (!chipInputMode) return false
-    const action = findAction(chipInputMode)
-    if (action?.min === undefined || action?.max === undefined) return false
+    const action = findRangeAction(chipInputMode)
+    if (!action) return false
     return chipAmount >= action.min && chipAmount <= action.max
   }
 
@@ -64,16 +68,16 @@ export function ActionBar({
 
   function handleAllIn() {
     if (!chipInputMode) return
-    const action = findAction(chipInputMode)
-    if (action?.max !== undefined) {
+    const action = findRangeAction(chipInputMode)
+    if (action) {
       setChipAmount(action.max)
     }
   }
 
   function getSliderProps(): { min: number; max: number } {
     if (chipInputMode) {
-      const action = findAction(chipInputMode)
-      if (action?.min !== undefined && action?.max !== undefined) {
+      const action = findRangeAction(chipInputMode)
+      if (action) {
         return { min: action.min, max: action.max }
       }
     }

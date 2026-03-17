@@ -254,6 +254,44 @@ describe('betting validation (task 1)', () => {
     })
   })
 
+  describe('getValidActions - cross-field invariant (discriminated union)', () => {
+    test('should return bet/raise with min/max and fold/check/call without', () => {
+      // Given: ベットもレイズも可能な状態を用意する
+      const players = Array.from({ length: 5 }, (_, i) =>
+        createTestPlayer({
+          id: `player-${i}`,
+          chips: 500,
+          currentBetInRound: i === 3 ? 0 : 10,
+        }),
+      )
+      const state = createTestState({
+        players,
+        currentBet: 10,
+        currentPlayerIndex: 3,
+      })
+
+      // When: 有効なアクションを取得する
+      const actions = getValidActions(state, 3)
+
+      // Then: fold/call にはmin/maxプロパティが存在しない
+      for (const action of actions) {
+        if (action.type === 'fold' || action.type === 'check' || action.type === 'call') {
+          expect('min' in action).toBe(false)
+          expect('max' in action).toBe(false)
+        }
+      }
+
+      // Then: raise にはmin/maxが数値で存在する
+      const raiseAction = actions.find((a) => a.type === 'raise')
+      expect(raiseAction).toBeDefined()
+      if (raiseAction && raiseAction.type === 'raise') {
+        expect(typeof raiseAction.min).toBe('number')
+        expect(typeof raiseAction.max).toBe('number')
+        expect(raiseAction.min).toBeLessThanOrEqual(raiseAction.max)
+      }
+    })
+  })
+
   describe('applyAction - amount validation (1.1)', () => {
     test('should throw when bet amount exceeds player chips', () => {
       // Given: チップが100のプレイヤーでcurrentBet=0

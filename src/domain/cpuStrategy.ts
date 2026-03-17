@@ -1,4 +1,4 @@
-import type { Card, GameState, PlayerAction, Rank, ValidAction } from './types'
+import type { Card, GameState, PlayerAction, Rank } from './types'
 import { getValidActions } from './betting'
 import { evaluate } from './handEvaluator'
 import { BIG_BLIND } from './constants'
@@ -75,10 +75,8 @@ function calculateBetAmount(
   return Math.min(Math.max(aligned, BIG_BLIND), playerChips)
 }
 
-function clampToValidRange(amount: number, validAction: ValidAction): number {
-  const min = validAction.min!
-  const max = validAction.max!
-  return Math.min(Math.max(amount, min), max)
+function clampToValidRange(amount: number, range: { min: number; max: number }): number {
+  return Math.min(Math.max(amount, range.min), range.max)
 }
 
 export function decideAction(
@@ -96,21 +94,23 @@ export function decideAction(
       : evaluatePostflopStrength(player.holeCards, state.communityCards)
 
   const canCheck = validTypes.includes('check')
-  const canBet = validTypes.includes('bet')
-  const canRaise = validTypes.includes('raise')
   const canCall = validTypes.includes('call')
-  const betAction = validActions.find((a) => a.type === 'bet')
-  const raiseAction = validActions.find((a) => a.type === 'raise')
+  const betAction = validActions.find(
+    (a): a is Extract<typeof a, { type: 'bet' }> => a.type === 'bet',
+  )
+  const raiseAction = validActions.find(
+    (a): a is Extract<typeof a, { type: 'raise' }> => a.type === 'raise',
+  )
 
   const roll = randomFn()
 
   if (strength === 'strong') {
     const rawAmount = calculateBetAmount(strength, player.chips, state.currentBet)
-    if (canBet) {
-      return { type: 'bet', amount: clampToValidRange(rawAmount, betAction!) }
+    if (betAction) {
+      return { type: 'bet', amount: clampToValidRange(rawAmount, betAction) }
     }
-    if (canRaise) {
-      return { type: 'raise', amount: clampToValidRange(rawAmount, raiseAction!) }
+    if (raiseAction) {
+      return { type: 'raise', amount: clampToValidRange(rawAmount, raiseAction) }
     }
     if (canCall) return { type: 'call' }
     if (canCheck) return { type: 'check' }
@@ -120,11 +120,11 @@ export function decideAction(
   if (strength === 'medium') {
     if (roll < 0.3) {
       const rawAmount = calculateBetAmount(strength, player.chips, state.currentBet)
-      if (canRaise) {
-        return { type: 'raise', amount: clampToValidRange(rawAmount, raiseAction!) }
+      if (raiseAction) {
+        return { type: 'raise', amount: clampToValidRange(rawAmount, raiseAction) }
       }
-      if (canBet) {
-        return { type: 'bet', amount: clampToValidRange(rawAmount, betAction!) }
+      if (betAction) {
+        return { type: 'bet', amount: clampToValidRange(rawAmount, betAction) }
       }
     }
     if (canCall) return { type: 'call' }
@@ -133,9 +133,9 @@ export function decideAction(
   }
 
   if (canCheck) {
-    if (canBet && roll < 0.2) {
+    if (betAction && roll < 0.2) {
       const rawAmount = calculateBetAmount(strength, player.chips, state.currentBet)
-      return { type: 'bet', amount: clampToValidRange(rawAmount, betAction!) }
+      return { type: 'bet', amount: clampToValidRange(rawAmount, betAction) }
     }
     return { type: 'check' }
   }

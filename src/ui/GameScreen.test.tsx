@@ -106,7 +106,7 @@ describe('GameScreen', () => {
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
-        { type: 'bet' },
+        { type: 'bet', min: 10, max: 1000 },
       ]
 
       // When: GameScreenをレンダリングする
@@ -140,7 +140,7 @@ describe('GameScreen', () => {
       const validActions: ValidAction[] = [
         { type: 'fold' },
         { type: 'check' },
-        { type: 'bet' },
+        { type: 'bet', min: 10, max: 1000 },
       ]
       const { onAction } = renderGameScreen({
         gameState,

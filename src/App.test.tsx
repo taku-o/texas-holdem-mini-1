@@ -30,7 +30,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /ゲーム開始/i })).toBeTruthy()
   })
 
-  test('should start game when start button is clicked', () => {
+  test('should start game when start button is clicked', async () => {
     // Given: 初期表示でゲーム開始ボタンがある
     const { container } = render(<App />)
 
@@ -38,8 +38,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /ゲーム開始/i }))
 
     // Then: ゲーム中の画面が表示される（プレイヤー席が存在する）
-    const seatElements = container.querySelectorAll('[data-testid^="player-seat-"]')
-    expect(seatElements).toHaveLength(5)
+    await waitFor(() => {
+      const seatElements = container.querySelectorAll('[data-testid^="player-seat-"]')
+      expect(seatElements).toHaveLength(5)
+    })
   })
 
   test('should not show start button during active game', async () => {
